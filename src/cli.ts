@@ -1,32 +1,68 @@
 #!/usr/bin/env bun
-// escenario-engine validar <mapa.tmj> <contenido.json> [--minijuegos A,B]
-// Sin <mapa.tmj> (un solo argumento) valida en modo legacy. Sale con código 1 si hay errores.
+/**
+ * Valida un nivel sin abrir el juego (para CI). Sale con código 1 si hay errores.
+ *
+ *   escenario-engine validar <mapa.tmj> <contenido.json> [--minijuegos A,B]
+ *   escenario-engine validar <contenido.json>            (formato v1, sin mapa)
+ */
 import { dirname, resolve } from 'node:path';
-import { resolverTilesets, type TiledMap } from './core/mapa';
+import { cargarTilesetsExternos, type TiledMap } from './core/mapa-tiled';
 import { validar } from './core/validar';
 
-const args = process.argv.slice(2);
-const i = args.indexOf('--minijuegos');
-const minijuegos = i >= 0 ? args.splice(i, 2)[1]?.split(',') : undefined;
-const [cmd, ...rutas] = args;
+const USO = 'uso: escenario-engine validar [mapa.tmj] <contenido.json> [--minijuegos A,B]';
 
-if (cmd !== 'validar' || rutas.length < 1 || rutas.length > 2) {
-  console.error('uso: escenario-engine validar [mapa.tmj] <contenido.json> [--minijuegos A,B]');
+function leerArgumentos(argumentos: string[]) {
+  const restantes = [...argumentos];
+  let minijuegos: string[] | undefined;
+
+  const posicion = restantes.indexOf('--minijuegos');
+  if (posicion >= 0) {
+    minijuegos = restantes[posicion + 1]?.split(',');
+    restantes.splice(posicion, 2);
+  }
+
+  const [comando, ...rutas] = restantes;
+  if (comando !== 'validar' || rutas.length < 1 || rutas.length > 2) return undefined;
+
+  const conMapa = rutas.length === 2;
+  return {
+    rutaDelMapa: conMapa ? rutas[0] : undefined,
+    rutaDelContenido: conMapa ? rutas[1]! : rutas[0]!,
+    minijuegos,
+  };
+}
+
+async function leerMapa(ruta: string): Promise<TiledMap> {
+  const mapa: TiledMap = await Bun.file(ruta).json();
+  // Los tilesets externos se buscan junto al mapa.
+  return cargarTilesetsExternos(mapa, (rutaDelTileset) => Bun.file(resolve(dirname(ruta), rutaDelTileset)).json());
+}
+
+const argumentos = leerArgumentos(process.argv.slice(2));
+if (!argumentos) {
+  console.error(USO);
   process.exit(2);
 }
 
-const leer = (ruta: string) => Bun.file(ruta).json();
-const [rutaMapa, rutaContenido] = rutas.length === 2 ? rutas : [undefined, rutas[0]!];
 let mapa: TiledMap | undefined;
-try {
-  if (rutaMapa) mapa = await resolverTilesets(await leer(rutaMapa), (r) => leer(resolve(dirname(rutaMapa), r)));
-} catch (e) {
-  console.error(`✗ parse: no se pudo leer el mapa: ${(e as Error).message}`);
+if (argumentos.rutaDelMapa) {
+  try {
+    mapa = await leerMapa(argumentos.rutaDelMapa);
+  } catch (error) {
+    console.error(`✗ parse: no se pudo leer el mapa: ${(error as Error).message}`);
+    process.exit(1);
+  }
+}
+
+const contenido = await Bun.file(argumentos.rutaDelContenido).text();
+const resultado = validar({ config: contenido, mapa, minijuegos: argumentos.minijuegos });
+
+for (const advertencia of resultado.advertencias) console.warn(`⚠ ${advertencia}`);
+for (const error of resultado.errores) console.error(`✗ ${error}`);
+
+const resumen = `${resultado.errores.length} error(es), ${resultado.advertencias.length} advertencia(s)`;
+if (resultado.errores.length > 0) {
+  console.log(`\n${resumen}`);
   process.exit(1);
 }
-const r = validar({ config: await Bun.file(rutaContenido!).text(), mapa, minijuegos });
-
-for (const w of r.warnings) console.warn(`⚠ ${w}`);
-for (const e of r.errores) console.error(`✗ ${e}`);
-console.log(r.errores.length ? `\n${r.errores.length} error(es), ${r.warnings.length} warning(s)` : `✓ ${rutaContenido} es válido (${r.warnings.length} warning(s))`);
-process.exit(r.errores.length ? 1 : 0);
+console.log(`✓ ${argumentos.rutaDelContenido} es válido (${resumen})`);

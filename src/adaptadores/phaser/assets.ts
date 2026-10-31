@@ -1,101 +1,170 @@
-// AssetManager (§9) sobre el loader de Phaser: carga por clave, deduplica y libera lo exclusivo de un minijuego.
+/**
+ * AssetManager (§9) sobre el cargador de Phaser.
+ *
+ * Tres niveles de carga:
+ *   1. Global (al montar): sonidos de toque, cercanía y música.
+ *   2. Por escena (al cargar el nivel): capas, props, personajes, animaciones, voces.
+ *   3. Bajo demanda: lo que pide cada minijuego mientras corre.
+ *
+ * Los niveles 1 y 2 se cargan juntos con `listaDeAssetsDelNivel`. El nivel 3 lo hace el minijuego
+ * con `cargar()`; al terminar, el motor libera lo que ese minijuego cargó (`liberar()`).
+ */
 import * as Phaser from 'phaser';
-import { EXTENSION, resolverRuta, type TipoAsset } from '../../core/assets';
+import { resolverUrlDeAsset, type TipoDeAsset } from '../../core/assets';
 import type { Contenido } from '../../core/esquema';
-import type { Mundo } from '../../core/mapa';
+import type { Mundo } from '../../core/mundo';
 
-export interface ItemAsset { clave: string; tipo: TipoAsset }
+export interface PedidoDeAsset {
+  clave: string;
+  tipo: TipoDeAsset;
+}
 
+/** Lo que reciben los minijuegos para cargar sus propios assets. */
 export interface AssetManager {
-  url(clave: string, tipo: TipoAsset): string;
-  /** Carga bajo demanda. Resuelve con las claves que no se pudieron cargar. */
-  cargar(items: ItemAsset[]): Promise<string[]>;
+  url(clave: string, tipo: TipoDeAsset): string;
+  /** Carga los assets pedidos. Termina con la lista de claves que no se pudieron cargar. */
+  cargar(pedidos: PedidoDeAsset[]): Promise<string[]>;
 }
 
-export class GestorAssets implements AssetManager {
-  private propias = new Set<string>();
-  /** Errores de ruta o de carga, con la ruta intentada. */
-  fallidos: { clave: string; tipo: string; detalle: string }[] = [];
+interface Falla {
+  clave: string;
+  tipo: string;
+  detalle: string;
+}
 
-  constructor(private scene: Phaser.Scene, private root: string, private cdn: string[]) {
-    scene.load.on('loaderror', (f: Phaser.Loader.File) => {
-      this.fallidos.push({ clave: f.key, tipo: f.type, detalle: `ruta intentada: ${f.url}` });
+export class GestorDeAssets implements AssetManager {
+  /** Lo que esta instancia cargó, para poder liberarlo después. */
+  private readonly cargadosPorMi: PedidoDeAsset[] = [];
+  readonly fallas: Falla[] = [];
+
+  constructor(
+    private readonly escena: Phaser.Scene,
+    private readonly assetsRoot: string,
+    private readonly cdn: string[],
+  ) {
+    escena.load.on('loaderror', (archivo: Phaser.Loader.File) => {
+      this.fallas.push({ clave: archivo.key, tipo: archivo.type, detalle: `ruta intentada: ${archivo.url}` });
     });
   }
 
-  url(clave: string, tipo: TipoAsset) {
-    return resolverRuta(clave, EXTENSION[tipo], this.root, this.cdn);
+  url(clave: string, tipo: TipoDeAsset): string {
+    return resolverUrlDeAsset(clave, tipo, this.assetsRoot, this.cdn);
   }
 
-  private existe(clave: string, tipo: TipoAsset) {
-    return tipo === 'audio' ? this.scene.cache.audio.exists(clave) : this.scene.textures.exists(clave);
-  }
+  /** Pone los pedidos en la fila del cargador. Dentro de `preload()` Phaser los carga solo. */
+  encolar(pedidos: PedidoDeAsset[]): void {
+    for (const pedido of pedidos) {
+      if (this.yaEstaCargado(pedido)) continue;
 
-  /** Encola en el loader (para usar dentro de preload). */
-  encolar(items: ItemAsset[]) {
-    for (const { clave, tipo } of items) {
-      if (this.existe(clave, tipo)) continue;
       let url: string;
-      try { url = this.url(clave, tipo); } catch (e) { this.fallidos.push({ clave, tipo, detalle: (e as Error).message }); continue; }
-      this.propias.add(`${tipo}:${clave}`);
-      if (tipo === 'imagen') this.scene.load.image(clave, url);
-      else if (tipo === 'audio') this.scene.load.audio(clave, url);
-      else this.scene.load.atlas(clave, url, url.replace(/\.[a-z0-9]+$/i, '.json'));
+      try {
+        url = this.url(pedido.clave, pedido.tipo);
+      } catch (error) {
+        this.fallas.push({ clave: pedido.clave, tipo: pedido.tipo, detalle: (error as Error).message });
+        continue;
+      }
+
+      this.cargadosPorMi.push(pedido);
+      switch (pedido.tipo) {
+        case 'imagen':
+          this.escena.load.image(pedido.clave, url);
+          break;
+        case 'audio':
+          this.escena.load.audio(pedido.clave, url);
+          break;
+        case 'atlas': {
+          const urlDelJson = url.replace(/\.[a-z0-9]+$/i, '.json');
+          this.escena.load.atlas(pedido.clave, url, urlDelJson);
+          break;
+        }
+      }
     }
   }
 
-  cargar(items: ItemAsset[]): Promise<string[]> {
-    const antes = this.fallidos.length;
-    this.encolar(items);
-    const fin = () => this.fallidos.slice(antes).map((f) => f.clave);
-    if (!this.scene.load.list.size) return Promise.resolve(fin());
-    return new Promise((res) => {
-      this.scene.load.once('complete', () => res(fin()));
-      this.scene.load.start();
+  /** Carga fuera de `preload()` (minijuegos). */
+  cargar(pedidos: PedidoDeAsset[]): Promise<string[]> {
+    const fallasAntes = this.fallas.length;
+    this.encolar(pedidos);
+    const clavesQueFallaron = () => this.fallas.slice(fallasAntes).map((falla) => falla.clave);
+
+    if (this.escena.load.list.size === 0) return Promise.resolve(clavesQueFallaron());
+    return new Promise((terminar) => {
+      this.escena.load.once('complete', () => terminar(clavesQueFallaron()));
+      this.escena.load.start();
     });
   }
 
-  /** Errores que impiden arrancar: imágenes y atlas faltantes (el audio cae a TTS). */
-  fatales(): string[] {
-    return this.fallidos
-      .filter((f) => f.tipo !== 'audio')
-      .map((f) => `textura ${f.clave} referenciada pero no cargada (${f.detalle})`);
+  /**
+   * Fallas que impiden arrancar: imágenes y atlas que no se cargaron.
+   * Las voces que falten no detienen nada: se usa voz sintetizada.
+   */
+  erroresQueImpidenArrancar(): string[] {
+    return this.fallas
+      .filter((falla) => falla.tipo !== 'audio')
+      .map((falla) => `textura ${falla.clave} referenciada pero no cargada (${falla.detalle})`);
   }
 
-  /** Libera las texturas y audios que cargó esta instancia (ref-count por dueño). */
-  liberar(conservar: Set<string> = new Set()) {
-    for (const k of this.propias) {
-      const [tipo, clave] = [k.slice(0, k.indexOf(':')), k.slice(k.indexOf(':') + 1)];
+  audiosQueFaltan(): Falla[] {
+    return this.fallas.filter((falla) => falla.tipo === 'audio');
+  }
+
+  /** Borra de la memoria lo que cargó esta instancia, excepto las claves de `conservar`. */
+  liberar(conservar: Set<string> = new Set()): void {
+    for (const { clave, tipo } of this.cargadosPorMi) {
       if (conservar.has(clave)) continue;
-      if (tipo === 'audio') this.scene.cache.audio.remove(clave);
-      else if (this.scene.textures.exists(clave)) this.scene.textures.remove(clave);
+      if (tipo === 'audio') this.escena.cache.audio.remove(clave);
+      else if (this.escena.textures.exists(clave)) this.escena.textures.remove(clave);
     }
-    this.propias.clear();
+    this.cargadosPorMi.length = 0;
+  }
+
+  private yaEstaCargado(pedido: PedidoDeAsset): boolean {
+    if (pedido.tipo === 'audio') return this.escena.cache.audio.exists(pedido.clave);
+    return this.escena.textures.exists(pedido.clave);
   }
 }
 
-/** Nivel 1 (global) + nivel 2 (por escena): capas, props, personajes, animaciones, voces, imágenes de opciones. */
-export function listaAssets(c: Contenido, m: Mundo): ItemAsset[] {
-  const items = new Map<string, TipoAsset>();
-  const add = (clave: string | undefined, tipo: TipoAsset) => { if (clave) items.set(clave, tipo); };
-  for (const s of Object.values(c.mundo.sonidos ?? {})) add(s, 'audio');
-  m.capas.forEach((k) => add(k.asset, 'imagen'));
-  m.props.forEach((p) => add(p.asset, 'imagen'));
-  const actores = [...(c.jugador ? [c.jugador.personaje] : []), ...Object.keys(m.npcs)];
-  for (const id of actores) {
-    const p = c.meta.personajes[id];
-    add(p?.sprite, 'imagen');
-    Object.values(p?.animaciones ?? {}).forEach((a) => add(a, 'atlas'));
-  }
-  Object.values(c.jugador?.animaciones ?? {}).forEach((a) => add(a, 'atlas'));
-  const walk = (v: unknown): void => {
-    if (Array.isArray(v)) return v.forEach(walk);
-    if (!v || typeof v !== 'object') return;
-    const o = v as Record<string, unknown>;
-    if (typeof o.audio === 'string') add(o.audio, 'audio');
-    if (typeof o.imagen === 'string') add(o.imagen, 'imagen');
-    Object.values(o).forEach(walk);
+/** Todo lo que un nivel necesita cargar antes de empezar (niveles 1 y 2). */
+export function listaDeAssetsDelNivel(contenido: Contenido, mundo: Mundo): PedidoDeAsset[] {
+  const pedidos = new Map<string, TipoDeAsset>(); // por clave, para no pedir dos veces lo mismo
+  const pedir = (clave: string | undefined, tipo: TipoDeAsset) => {
+    if (clave) pedidos.set(clave, tipo);
   };
-  walk([c.secuencias, c.npcs, c.interactivos, c.comentarios, c.salida]);
-  return [...items].map(([clave, tipo]) => ({ clave, tipo }));
+
+  // Nivel 1: sonidos globales
+  for (const clave of Object.values(contenido.mundo.sonidos ?? {})) pedir(clave, 'audio');
+
+  // Nivel 2: imágenes del mapa
+  for (const capa of mundo.capas) pedir(capa.asset, 'imagen');
+  for (const prop of mundo.props) pedir(prop.asset, 'imagen');
+
+  // Personajes que aparecen en pantalla: el jugador y los NPCs del mapa
+  const idsEnPantalla = Object.keys(mundo.npcs);
+  if (contenido.jugador) idsEnPantalla.push(contenido.jugador.personaje);
+  for (const id of idsEnPantalla) {
+    const personaje = contenido.meta.personajes[id];
+    if (!personaje) continue;
+    pedir(personaje.sprite, 'imagen');
+    for (const animacion of Object.values(personaje.animaciones ?? {})) pedir(animacion, 'atlas');
+  }
+  for (const animacion of Object.values(contenido.jugador?.animaciones ?? {})) pedir(animacion, 'atlas');
+
+  // Voces e imágenes de opciones, en cualquier parte del diálogo
+  buscarClavesEnDialogos([contenido.secuencias, contenido.npcs, contenido.interactivos, contenido.comentarios, contenido.salida], pedir);
+
+  return [...pedidos].map(([clave, tipo]) => ({ clave, tipo }));
+}
+
+/** Recorre cualquier estructura buscando campos "audio" e "imagen". */
+function buscarClavesEnDialogos(valor: unknown, pedir: (clave: string, tipo: TipoDeAsset) => void): void {
+  if (Array.isArray(valor)) {
+    for (const elemento of valor) buscarClavesEnDialogos(elemento, pedir);
+    return;
+  }
+  if (typeof valor !== 'object' || valor === null) return;
+
+  const objeto = valor as Record<string, unknown>;
+  if (typeof objeto.audio === 'string') pedir(objeto.audio, 'audio');
+  if (typeof objeto.imagen === 'string') pedir(objeto.imagen, 'imagen');
+  for (const hijo of Object.values(objeto)) buscarClavesEnDialogos(hijo, pedir);
 }

@@ -12,10 +12,36 @@ bun run validar ejemplo/niveles/tortilleria.tmj ejemplo/niveles/tortilleria.json
 
 ## Estructura
 
-- `src/core/` — puro, sin Phaser (corre en CI): esquema Zod, lector de Tiled y modo legacy, validador, `GameState`, `DialogueRuntime`, geometría, rutas de assets.
-- `src/adaptadores/phaser/` — escena, actores, UI (globos, `elige`, voz/TTS) y AssetManager.
-- `src/engine.ts` — `EscenarioEngine` (API del §4). `src/cli.ts` — `escenario-engine validar`.
-- `ejemplo/` — la Tortillería del §14.1 con un host de prueba y assets de relleno.
+Cada archivo empieza con un comentario que explica qué hace y a qué sección de la spec corresponde.
+
+**`src/core/`** — sin Phaser; corre en el navegador y en CI.
+
+| Archivo | Qué hace |
+| --- | --- |
+| `esquema.ts` | Esquema Zod del JSON y tipos internos. Convierte cada paso a `{ tipo: ... }`. |
+| `validar.ts` | Orquesta las fases de validación (§12). |
+| `validar-enlaces.ts` / `validar-cruce.ts` | Fase 3 (lo que se nombra existe) y fase 4 (mapa ↔ contenido). |
+| `recorrer-pasos.ts` | Recorre todos los pasos anidados; lo usan las fases 3 y 4. |
+| `mundo.ts` | Modelo del mundo (el DÓNDE) y catálogo de decorado. |
+| `mapa-tiled.ts` | Lee un `.tmj` de Tiled y arma el mundo. |
+| `legacy.ts` | Formato v1: normaliza formas viejas y arma el mundo sin mapa. |
+| `dialogo.ts` | `DialogueRuntime`: ejecuta los pasos uno por uno. |
+| `estado.ts` / `condiciones.ts` / `partida.ts` | Estado del juego, condiciones y partida guardada. |
+| `geometria.ts` / `assets.ts` | Piso y movimiento; rutas seguras de assets. |
+
+**`src/adaptadores/phaser/`** — lo que se ve y se oye.
+
+| Archivo | Qué hace |
+| --- | --- |
+| `escena.ts` | Conecta todas las piezas; recibe toques y teclado. Empieza a leer aquí. |
+| `construir-mundo.ts` | Dibuja capas, props y actores. |
+| `actor.ts` | Un personaje que camina. |
+| `camara.ts`, `avisos.ts`, `comentarios.ts` | Cámara, resaltado por cercanía, comentarios por zona. |
+| `conversacion.ts`, `globo.ts`, `opciones.ts`, `voz.ts` | Diálogo en pantalla y voz (grabada o TTS). |
+| `minijuego.ts`, `efectos.ts` | Montaje de minijuegos; partículas y sonidos. |
+| `assets.ts`, `barra-de-carga.ts`, `flecha-de-salida.ts`, `depuracion.ts`, `interfaz.ts` | Carga, UI menor y constantes compartidas. |
+
+`src/engine.ts` es la API pública (`EscenarioEngine`) y `src/cli.ts` el validador de línea de comandos.
 
 ## Convenciones que el spec no fija
 

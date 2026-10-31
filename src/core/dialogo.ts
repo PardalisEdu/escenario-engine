@@ -1,105 +1,202 @@
-// DialogueRuntime (§10): intérprete de pasos como corutina. No conoce Phaser; habla con un Escenario.
-import { clavePaso, type Contenido, type Linea, type Opcion, type Paso, type Valor, type Vec } from './esquema';
+/**
+ * DialogueRuntime (§10): el intérprete que ejecuta los pasos de un diálogo, uno tras otro.
+ *
+ * Cada paso es una promesa que termina cuando el paso terminó (la línea se descartó,
+ * el minijuego se resolvió, la caminata llegó). El intérprete no sabe nada de Phaser:
+ * le pide al mundo que haga cosas a través de la interfaz `AccionesDelMundo`.
+ *
+ * Reglas:
+ * - Solo hay un diálogo activo a la vez. Si ya hay uno, los nuevos se ignoran (no hay cola).
+ * - `abort()` termina el paso actual y libera todo; el host lo usa, por ejemplo, al abrir un menú.
+ * - Una secuencia puede llamar a otra, hasta 8 niveles de profundidad.
+ */
+import type { AlVolver, Contenido, DestinoCamina, Linea, Opcion, Paso, PasosOSecuencia, Valor } from './esquema';
 import type { GameState } from './estado';
 
-export interface MiniGameResult { exito: boolean; otorgar?: Record<string, Valor> }
-
-/** Lo que el intérprete necesita del mundo. Cada promesa termina cuando el paso terminó. */
-export interface Escenario {
-  linea(l: Linea, texto: string, signal: AbortSignal): Promise<void>;
-  elegir(pregunta: string, opciones: Opcion[], signal: AbortSignal): Promise<number>;
-  efecto(nombre: string, signal: AbortSignal): Promise<void>;
-  camina(quien: string | undefined, destino: number | string | Vec, signal: AbortSignal): Promise<void>;
-  juego(clave: string, config: unknown, signal: AbortSignal): Promise<MiniGameResult>;
+/** Lo que devuelve un minijuego al terminar (§4.2). */
+export interface MiniGameResult {
+  exito: boolean;
+  /** Valores que se aplican al estado, p. ej. { tortillas: true }. */
+  otorgar?: Record<string, Valor>;
 }
 
-const PROFUNDIDAD_MAX = 8;
+/**
+ * Lo que el intérprete le pide al mundo. Cada promesa debe terminar cuando la acción terminó.
+ * Todas reciben una señal de cancelación: si se aborta, deben limpiar y terminar.
+ */
+export interface AccionesDelMundo {
+  mostrarLinea(linea: Linea, textoCompleto: string, cancelacion: AbortSignal): Promise<void>;
+  /** Devuelve el índice de la opción elegida. */
+  elegirOpcion(pregunta: string, opciones: Opcion[], cancelacion: AbortSignal): Promise<number>;
+  reproducirEfecto(nombre: string, cancelacion: AbortSignal): Promise<void>;
+  caminar(quien: string | undefined, destino: DestinoCamina, cancelacion: AbortSignal): Promise<void>;
+  jugarMinijuego(clave: string, config: unknown, cancelacion: AbortSignal): Promise<MiniGameResult>;
+}
 
-const conAbort = <T>(p: Promise<T>, s: AbortSignal) => new Promise<T>((res, rej) => {
-  if (s.aborted) return rej(s.reason);
-  const alAbortar = () => rej(s.reason);
-  s.addEventListener('abort', alAbortar, { once: true });
-  p.then(res, rej).finally(() => s.removeEventListener('abort', alAbortar));
-});
+export type TipoDeInterlocutor = 'npcs' | 'interactivos';
+
+const PROFUNDIDAD_MAXIMA_DE_SECUENCIAS = 8;
+
+/** Datos que acompañan la ejecución de una lista de pasos. */
+interface Contexto {
+  cancelacion: AbortSignal;
+  /** Cuántas secuencias anidadas llevamos. */
+  profundidad: number;
+  /** El alVolver del NPC con el que se habla, para usarlo después de un minijuego. */
+  alVolver?: AlVolver;
+}
 
 export class DialogueRuntime {
-  private ctrl?: AbortController;
-  /** id del NPC o interactivo con el que se habla, si aplica. */
-  enCurso?: string;
+  private cancelador?: AbortController;
 
-  constructor(private c: Contenido, private estado: GameState, private esc: Escenario) {}
+  /** id del NPC o interactivo con el que se está hablando (si aplica). */
+  idDelInterlocutor?: string;
 
-  get activo() { return !!this.ctrl; }
+  constructor(
+    private readonly contenido: Contenido,
+    private readonly estado: GameState,
+    private readonly mundo: AccionesDelMundo,
+  ) {}
 
-  /** Ejecuta la primera rama que cumple. Devuelve false si ya hay un diálogo activo (sin colas). */
-  hablar(tipo: 'npcs' | 'interactivos', id: string): Promise<boolean> | false {
-    const def = this.c[tipo][id];
-    if (!def) return Promise.resolve(true);
-    return this.correr(id, async (s) => {
-      const rama = def.dialogo.find((r) => this.estado.cumple(r.cuando));
+  /** true mientras corre un diálogo. */
+  get ocupado(): boolean {
+    return this.cancelador !== undefined;
+  }
+
+  /**
+   * Habla con un NPC o un interactivo: ejecuta la primera rama de su diálogo cuya condición se cumple.
+   * Si ya hay un diálogo activo, no hace nada.
+   */
+  async hablarCon(tipo: TipoDeInterlocutor, id: string): Promise<void> {
+    const interlocutor = this.contenido[tipo][id];
+    if (!interlocutor) return;
+
+    await this.ejecutarComoDialogo(id, async (cancelacion) => {
+      const rama = interlocutor.dialogo.find((candidata) => this.estado.cumple(candidata.condicion));
       if (!rama) return;
-      this.estado.set(`charlas.${id}`, true);
-      await this.pasos(rama.dice, s, 0, def.alVolver);
+      // Hablar con alguien marca su flag automático (§8.4, regla 3).
+      this.estado.poner(`charlas.${id}`, true);
+      await this.ejecutarPasos(rama.pasos, { cancelacion, profundidad: 0, alVolver: interlocutor.alVolver });
     });
   }
 
-  /** Ejecuta pasos sueltos (p. ej. salida.siBloqueada). */
-  ejecutar(pasos: Paso[] | string): Promise<boolean> | false {
-    return this.correr(undefined, (s) => this.pasos(this.resolver(pasos), s, 0));
+  /** Ejecuta pasos sueltos, por ejemplo "salida.siBloqueada". Si ya hay un diálogo activo, no hace nada. */
+  async ejecutar(pasos: PasosOSecuencia): Promise<void> {
+    await this.ejecutarComoDialogo(undefined, (cancelacion) =>
+      this.ejecutarPasos(this.resolver(pasos), { cancelacion, profundidad: 0 }),
+    );
   }
 
-  /** Termina el paso actual y libera limpio. */
-  abort() {
-    this.ctrl?.abort(new DOMException('abortado', 'AbortError'));
+  /** Termina el paso actual y libera el diálogo. Una caminata abortada deja al personaje donde está. */
+  abort(): void {
+    this.cancelador?.abort(new DOMException('diálogo abortado', 'AbortError'));
   }
 
-  private correr(id: string | undefined, fn: (s: AbortSignal) => Promise<void>): Promise<boolean> | false {
-    if (this.ctrl) return false;
-    const ctrl = (this.ctrl = new AbortController());
-    this.enCurso = id;
-    return fn(ctrl.signal)
-      .then(() => true, (e) => {
-        if (!ctrl.signal.aborted) console.error('[escenario-engine]', e);
-        return true;
-      })
-      .finally(() => { this.ctrl = undefined; this.enCurso = undefined; });
-  }
+  private async ejecutarComoDialogo(
+    idDelInterlocutor: string | undefined,
+    tarea: (cancelacion: AbortSignal) => Promise<void>,
+  ): Promise<void> {
+    if (this.ocupado) return;
 
-  private resolver(x: Paso[] | string): Paso[] {
-    return typeof x === 'string' ? this.c.secuencias[x] ?? [] : x;
-  }
-
-  private async pasos(pasos: Paso[], s: AbortSignal, prof: number, alVolver?: Contenido['npcs'][string]['alVolver']): Promise<void> {
-    if (prof > PROFUNDIDAD_MAX) throw new Error(`se excedió la profundidad máxima de secuencias (${PROFUNDIDAD_MAX})`);
-    for (const p of pasos) {
-      s.throwIfAborted();
-      const q = p as any;
-      switch (clavePaso(p)) {
-        case 'cuando':
-          if (this.estado.cumple(q.cuando)) await this.pasos(q.dice, s, prof, alVolver);
-          break;
-        case 'elige': {
-          const visibles = (q.opciones as Opcion[]).filter((o) => this.estado.cumple(o.cuando));
-          if (!visibles.length) break;
-          const i = await conAbort(this.esc.elegir(this.estado.interpolar(q.elige), visibles, s), s);
-          await this.pasos(this.resolver(visibles[i]!.secuencia), s, prof + 1, alVolver);
-          break;
-        }
-        case 'efecto': await conAbort(this.esc.efecto(q.efecto, s), s); break;
-        case 'pon': this.estado.aplicar(q.pon); break;
-        case 'juego': {
-          const r = await conAbort(this.esc.juego(q.juego, q.config, s), s);
-          this.estado.aplicar(r.otorgar);
-          if (alVolver) {
-            const logrado = [alVolver.conItem].flat().every((k) => !!this.estado.get(k));
-            await this.pasos(this.resolver(logrado ? alVolver.siLogrado : alVolver.siNo), s, prof + 1);
-          }
-          break;
-        }
-        case 'camina': await conAbort(this.esc.camina(q.quien, q.camina, s), s); break;
-        case 'secuencia': await this.pasos(this.resolver(q.secuencia), s, prof + 1, alVolver); break;
-        case 'dice': await conAbort(this.esc.linea(p as Linea, this.estado.interpolar(q.texto), s), s); break;
-      }
+    const cancelador = new AbortController();
+    this.cancelador = cancelador;
+    this.idDelInterlocutor = idDelInterlocutor;
+    try {
+      await tarea(cancelador.signal);
+    } catch (error) {
+      // Abortar no es un error; cualquier otra cosa sí se reporta.
+      if (!cancelador.signal.aborted) console.error('[escenario-engine]', error);
+    } finally {
+      this.cancelador = undefined;
+      this.idDelInterlocutor = undefined;
     }
   }
+
+  /** Una secuencia por nombre se convierte en sus pasos. */
+  private resolver(pasos: PasosOSecuencia): Paso[] {
+    if (typeof pasos === 'string') return this.contenido.secuencias[pasos] ?? [];
+    return pasos;
+  }
+
+  private async ejecutarPasos(pasos: Paso[], contexto: Contexto): Promise<void> {
+    if (contexto.profundidad > PROFUNDIDAD_MAXIMA_DE_SECUENCIAS) {
+      throw new Error(`se excedió la profundidad máxima de secuencias (${PROFUNDIDAD_MAXIMA_DE_SECUENCIAS})`);
+    }
+    for (const paso of pasos) {
+      contexto.cancelacion.throwIfAborted();
+      await this.ejecutarPaso(paso, contexto);
+    }
+  }
+
+  private async ejecutarPaso(paso: Paso, contexto: Contexto): Promise<void> {
+    const { cancelacion } = contexto;
+    const dentroDeOtraSecuencia = { ...contexto, profundidad: contexto.profundidad + 1 };
+
+    switch (paso.tipo) {
+      case 'linea': {
+        const texto = this.estado.completarTexto(paso.texto);
+        await esperarOCancelar(this.mundo.mostrarLinea(paso, texto, cancelacion), cancelacion);
+        break;
+      }
+
+      case 'elige': {
+        const opcionesVisibles = paso.opciones.filter((opcion) => this.estado.cumple(opcion.condicion));
+        if (opcionesVisibles.length === 0) break;
+        const pregunta = this.estado.completarTexto(paso.pregunta);
+        const indice = await esperarOCancelar(this.mundo.elegirOpcion(pregunta, opcionesVisibles, cancelacion), cancelacion);
+        await this.ejecutarPasos(this.resolver(opcionesVisibles[indice]!.pasos), dentroDeOtraSecuencia);
+        break;
+      }
+
+      case 'efecto':
+        await esperarOCancelar(this.mundo.reproducirEfecto(paso.nombre, cancelacion), cancelacion);
+        break;
+
+      case 'pon':
+        this.estado.ponerVarios(paso.valores);
+        break;
+
+      case 'juego': {
+        const resultado = await esperarOCancelar(this.mundo.jugarMinijuego(paso.clave, paso.config, cancelacion), cancelacion);
+        this.estado.ponerVarios(resultado.otorgar);
+        if (contexto.alVolver) await this.ejecutarAlVolver(contexto.alVolver, dentroDeOtraSecuencia);
+        break;
+      }
+
+      case 'camina':
+        await esperarOCancelar(this.mundo.caminar(paso.quien, paso.destino, cancelacion), cancelacion);
+        break;
+
+      case 'secuencia':
+        await this.ejecutarPasos(this.resolver(paso.nombre), dentroDeOtraSecuencia);
+        break;
+
+      case 'condicional':
+        if (this.estado.cumple(paso.condicion)) await this.ejecutarPasos(paso.pasos, contexto);
+        break;
+    }
+  }
+
+  /** Tras un minijuego: si el estado tiene los ítems de conItem → siLogrado; si no → siNo (§8.5). */
+  private async ejecutarAlVolver(alVolver: AlVolver, contexto: Contexto): Promise<void> {
+    const logrado = alVolver.conItem.every((item) => Boolean(this.estado.valorDe(item)));
+    const pasos = logrado ? alVolver.siLogrado : alVolver.siNo;
+    // Los pasos de alVolver no vuelven a disparar alVolver.
+    await this.ejecutarPasos(this.resolver(pasos), { ...contexto, alVolver: undefined });
+  }
+}
+
+/** Espera la promesa, pero termina de inmediato (con error) si llega la cancelación. */
+function esperarOCancelar<T>(promesa: Promise<T>, cancelacion: AbortSignal): Promise<T> {
+  return new Promise<T>((resolver, rechazar) => {
+    if (cancelacion.aborted) {
+      rechazar(cancelacion.reason);
+      return;
+    }
+    const alCancelar = () => rechazar(cancelacion.reason);
+    cancelacion.addEventListener('abort', alCancelar, { once: true });
+    promesa
+      .then(resolver, rechazar)
+      .finally(() => cancelacion.removeEventListener('abort', alCancelar));
+  });
 }

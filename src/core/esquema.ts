@@ -1,179 +1,404 @@
-// Schema del JSON de contenido (§8). Fase 2 del pipeline de validación.
+/**
+ * Esquema del JSON de contenido de un nivel (§8 de la spec) y los tipos que usa el motor.
+ *
+ * Quien escribe un nivel usa claves cortas, pensadas para escribirse a mano. Al validar,
+ * cada paso se convierte en un objeto con un campo `tipo`, para que el resto del motor
+ * pueda hacer `switch (paso.tipo)` en vez de adivinar qué clase de paso es:
+ *
+ *   En el JSON del nivel                          Dentro del motor
+ *   { "dice": "tortu", "texto": "Hola" }          { tipo: 'linea', hablante: 'tortu', texto: 'Hola' }
+ *   { "elige": "¿Cuál?", "opciones": [...] }      { tipo: 'elige', pregunta: '¿Cuál?', opciones: [...] }
+ *   { "efecto": "magia" }                         { tipo: 'efecto', nombre: 'magia' }
+ *   { "pon": { "globo": "rosa" } }                { tipo: 'pon', valores: { globo: 'rosa' } }
+ *   { "juego": "Tortilleria", "config": {...} }   { tipo: 'juego', clave: 'Tortilleria', config: {...} }
+ *   { "camina": "frente", "quien": "tortu" }      { tipo: 'camina', destino: 'frente', quien: 'tortu' }
+ *   { "secuencia": "aun_no_item" }                { tipo: 'secuencia', nombre: 'aun_no_item' }
+ *   { "cuando": "tengo x", "dice": [...] }        { tipo: 'condicional', condicion: 'tengo x', pasos: [...] }
+ *
+ * Las ramas de un diálogo también se renombran: { "cuando", "dice": [...] } → { condicion, pasos }.
+ * Los mensajes de error siempre usan los nombres del JSON, que son los que conoce quien escribe.
+ */
 import { z } from 'zod';
 
 z.config(z.locales.es());
 
-export type Valor = string | number | boolean;
-export type Condicion = string | Condicion[] | { alguno: Condicion[] };
-export type Mira = 'izquierda' | 'derecha';
-export interface Vec { x: number; y: number }
+// ─── Tipos básicos ───────────────────────────────────────────────────────────
 
+export type Valor = string | number | boolean;
+export type Mira = 'izquierda' | 'derecha';
+export type Idioma = 'es' | 'en';
+
+export interface Punto {
+  x: number;
+  y: number;
+}
+
+/**
+ * Una condición (§8.4). Puede ser:
+ * - un texto: "tengo tortillas", "no tengo limones", "objetivosCompletos", "globo"
+ * - un arreglo: todas deben cumplirse (Y lógico)
+ * - { alguno: [...] }: basta con que se cumpla una (O lógico)
+ */
+export type Condicion = string | Condicion[] | { alguno: Condicion[] };
+
+// ─── Pasos del diálogo, ya convertidos (§8.3) ────────────────────────────────
+
+/** Una línea de diálogo: muestra un globo y espera un toque o el fin del audio. */
 export interface Linea {
-  dice: string;
+  tipo: 'linea';
+  /** id del personaje que habla (clave de meta.personajes). */
+  hablante: string;
   texto: string;
+  /** Traducción al idioma base, si el hablante usa otro idioma. */
   trad?: string;
+  /** Palabra de vocabulario en inglés (junto con `es`, forma una tarjeta del álbum). */
   en?: string;
   es?: string;
+  /** Clave de la voz grabada. Si no existe, se usa voz sintetizada. */
   audio?: string;
 }
+
+/** Pasos escritos en el lugar, o el nombre de una secuencia declarada en "secuencias". */
+export type PasosOSecuencia = Paso[] | string;
+
 export interface Opcion {
   texto?: string;
   trad?: string;
   imagen?: string;
   audio?: string;
-  cuando?: Condicion;
-  secuencia: Paso[] | string;
+  /** Si tiene condición, la opción solo aparece cuando se cumple. */
+  condicion?: Condicion;
+  pasos: PasosOSecuencia;
 }
-export type Paso =
-  | Linea
-  | { elige: string; opciones: Opcion[] }
-  | { efecto: string }
-  | { pon: Record<string, Valor> }
-  | { juego: string; config?: unknown }
-  | { camina: number | string | Vec; quien?: string }
-  | { secuencia: string }
-  | { cuando: Condicion; dice: Paso[] };
 
-const valor = z.union([z.string(), z.number(), z.boolean()]);
-const vec = z.object({ x: z.number(), y: z.number() });
+export interface PasoElige {
+  tipo: 'elige';
+  pregunta: string;
+  opciones: Opcion[];
+}
 
-export const condicion: z.ZodType<Condicion> = z.lazy(() =>
-  z.union([z.string().min(1), z.array(condicion), z.strictObject({ alguno: z.array(condicion).min(1) })]),
+export interface PasoEfecto {
+  tipo: 'efecto';
+  nombre: string;
+}
+
+export interface PasoPon {
+  tipo: 'pon';
+  valores: Record<string, Valor>;
+}
+
+export interface PasoJuego {
+  tipo: 'juego';
+  /** Clave de la fábrica de minijuego registrada por el host. */
+  clave: string;
+  config?: unknown;
+}
+
+/**
+ * A dónde camina alguien:
+ * - un número: solo la x, conserva la y (formato v1)
+ * - un texto: el nombre de un punto del mapa de Tiled
+ * - { x, y }: un punto exacto
+ */
+export type DestinoCamina = number | string | Punto;
+
+export interface PasoCamina {
+  tipo: 'camina';
+  destino: DestinoCamina;
+  /** Quién camina. Si se omite, camina el jugador. */
+  quien?: string;
+}
+
+export interface PasoSecuencia {
+  tipo: 'secuencia';
+  nombre: string;
+}
+
+export interface PasoCondicional {
+  tipo: 'condicional';
+  condicion: Condicion;
+  pasos: Paso[];
+}
+
+export type Paso = Linea | PasoElige | PasoEfecto | PasoPon | PasoJuego | PasoCamina | PasoSecuencia | PasoCondicional;
+
+/** Una rama del diálogo de un NPC: se ejecuta la primera cuya condición se cumple. */
+export interface Rama {
+  condicion?: Condicion;
+  pasos: Paso[];
+}
+
+/** Qué hacer al volver de un minijuego (§8.5). */
+export interface AlVolver {
+  /** Ítems que el minijuego debía otorgar. */
+  conItem: string[];
+  siLogrado: PasosOSecuencia;
+  siNo: PasosOSecuencia;
+}
+
+/** Algo con lo que se puede hablar: un NPC o un prop interactivo. */
+export interface Interlocutor {
+  dialogo: Rama[];
+  alVolver?: AlVolver;
+}
+
+// ─── Esquemas de Zod ─────────────────────────────────────────────────────────
+
+const esquemaValor = z.union([z.string(), z.number(), z.boolean()]);
+const esquemaPunto = z.object({ x: z.number(), y: z.number() });
+
+export const esquemaCondicion: z.ZodType<Condicion> = z.lazy(() =>
+  z.union([
+    z.string().min(1),
+    z.array(esquemaCondicion),
+    z.strictObject({ alguno: z.array(esquemaCondicion).min(1) }),
+  ]),
 );
 
-const linea = z.object({
-  dice: z.string(),
-  texto: z.string(),
-  trad: z.string().optional(),
-  en: z.string().optional(),
-  es: z.string().optional(),
-  audio: z.string().optional(),
-});
+// Los pasos se contienen unos a otros (un condicional tiene pasos dentro),
+// por eso se declaran con z.lazy: el esquema se resuelve cuando se usa.
+const listaDePasos: z.ZodType<Paso[]> = z.lazy(() => z.array(esquemaPaso));
+const pasosOSecuencia: z.ZodType<PasosOSecuencia> = z.lazy(() => z.union([z.string(), z.array(esquemaPaso)]));
 
-const pasos = z.lazy(() => z.array(paso));
-const pasosORef = z.lazy(() => z.union([z.string(), z.array(paso)]));
+const esquemaLinea = z
+  .object({
+    dice: z.string(),
+    texto: z.string(),
+    trad: z.string().optional(),
+    en: z.string().optional(),
+    es: z.string().optional(),
+    audio: z.string().optional(),
+  })
+  .transform((json): Linea => ({
+    tipo: 'linea',
+    hablante: json.dice,
+    texto: json.texto,
+    trad: json.trad,
+    en: json.en,
+    es: json.es,
+    audio: json.audio,
+  }));
 
-const esquemasPaso = {
-  cuando: z.object({ cuando: condicion, dice: pasos }),
-  elige: z.object({
+const esquemaElige = z
+  .object({
     elige: z.string(),
-    opciones: z.array(z.object({
-      texto: z.string().optional(),
-      trad: z.string().optional(),
-      imagen: z.string().optional(),
-      audio: z.string().optional(),
-      cuando: condicion.optional(),
-      secuencia: pasosORef,
-    })).min(1),
-  }),
-  juego: z.object({ juego: z.string(), config: z.unknown().optional() }),
-  camina: z.object({ camina: z.union([z.number(), z.string(), vec]), quien: z.string().optional() }),
-  secuencia: z.object({ secuencia: z.string() }),
-  efecto: z.object({ efecto: z.string() }),
-  pon: z.object({ pon: z.record(z.string(), valor) }),
-  dice: linea,
-} as const;
-// El orden importa: un condicional también trae "dice" (su cuerpo).
-export const CLAVES_PASO = Object.keys(esquemasPaso) as (keyof typeof esquemasPaso)[];
+    opciones: z
+      .array(
+        z.object({
+          texto: z.string().optional(),
+          trad: z.string().optional(),
+          imagen: z.string().optional(),
+          audio: z.string().optional(),
+          cuando: esquemaCondicion.optional(),
+          secuencia: pasosOSecuencia,
+        }),
+      )
+      .min(1),
+  })
+  .transform((json): PasoElige => ({
+    tipo: 'elige',
+    pregunta: json.elige,
+    opciones: json.opciones.map((opcion) => ({
+      texto: opcion.texto,
+      trad: opcion.trad,
+      imagen: opcion.imagen,
+      audio: opcion.audio,
+      condicion: opcion.cuando,
+      pasos: opcion.secuencia,
+    })),
+  }));
 
-export const clavePaso = (p: object) => CLAVES_PASO.find((k) => k in p);
+const esquemaEfecto = z
+  .object({ efecto: z.string() })
+  .transform((json): PasoEfecto => ({ tipo: 'efecto', nombre: json.efecto }));
 
-// Cada paso tiene una sola intención, elegida por su clave distintiva (§8.3).
-export const paso: z.ZodType<Paso> = z.unknown().superRefine((v, ctx) => {
-  const clave = v && typeof v === 'object' && !Array.isArray(v) ? clavePaso(v) : undefined;
-  if (!clave) {
-    ctx.addIssue({ code: 'custom', message: `paso sin intención: se espera una clave entre ${CLAVES_PASO.join(', ')}` });
-    return;
+const esquemaPon = z
+  .object({ pon: z.record(z.string(), esquemaValor) })
+  .transform((json): PasoPon => ({ tipo: 'pon', valores: json.pon }));
+
+const esquemaJuego = z
+  .object({ juego: z.string(), config: z.unknown().optional() })
+  .transform((json): PasoJuego => ({ tipo: 'juego', clave: json.juego, config: json.config }));
+
+const esquemaCamina = z
+  .object({ camina: z.union([z.number(), z.string(), esquemaPunto]), quien: z.string().optional() })
+  .transform((json): PasoCamina => ({ tipo: 'camina', destino: json.camina, quien: json.quien }));
+
+const esquemaSecuencia = z
+  .object({ secuencia: z.string() })
+  .transform((json): PasoSecuencia => ({ tipo: 'secuencia', nombre: json.secuencia }));
+
+const esquemaCondicional = z
+  .object({ cuando: esquemaCondicion, dice: listaDePasos })
+  .transform((json): PasoCondicional => ({ tipo: 'condicional', condicion: json.cuando, pasos: json.dice }));
+
+/**
+ * Cada paso se reconoce por su clave distintiva. El orden importa:
+ * "cuando" va antes que "dice" porque un condicional también trae "dice" (su cuerpo).
+ */
+const ESQUEMAS_DE_PASO: { clave: string; esquema: z.ZodType<Paso> }[] = [
+  { clave: 'cuando', esquema: esquemaCondicional },
+  { clave: 'elige', esquema: esquemaElige },
+  { clave: 'juego', esquema: esquemaJuego },
+  { clave: 'camina', esquema: esquemaCamina },
+  { clave: 'secuencia', esquema: esquemaSecuencia },
+  { clave: 'efecto', esquema: esquemaEfecto },
+  { clave: 'pon', esquema: esquemaPon },
+  { clave: 'dice', esquema: esquemaLinea },
+];
+
+const esquemaPaso: z.ZodType<Paso> = z.unknown().transform((json, contexto): Paso => {
+  const esObjeto = typeof json === 'object' && json !== null && !Array.isArray(json);
+  const encontrado = esObjeto ? ESQUEMAS_DE_PASO.find(({ clave }) => clave in json) : undefined;
+
+  if (!encontrado) {
+    const claves = ESQUEMAS_DE_PASO.map(({ clave }) => clave).join(', ');
+    contexto.addIssue({ code: 'custom', message: `paso sin intención: se espera una clave entre ${claves}` });
+    return z.NEVER;
   }
-  const r = esquemasPaso[clave].safeParse(v);
-  if (!r.success) for (const i of r.error.issues) ctx.addIssue({ ...i, path: i.path } as never);
-}) as never;
 
-const animaciones = z.object({ idle: z.string().optional(), caminar: z.string().optional(), hablar: z.string().optional() });
-
-const rama = z.object({ cuando: condicion.optional(), dice: z.array(paso) });
-
-const alVolver = z.object({
-  conItem: z.union([z.string(), z.array(z.string()).min(1)]),
-  siLogrado: pasosORef,
-  siNo: pasosORef,
+  const resultado = encontrado.esquema.safeParse(json);
+  if (!resultado.success) {
+    for (const problema of resultado.error.issues) {
+      contexto.addIssue({ code: 'custom', message: problema.message, path: problema.path });
+    }
+    return z.NEVER;
+  }
+  return resultado.data;
 });
 
-const formaLegacy = z.object({ tipo: z.literal('rect'), w: z.number(), h: z.number() });
+const esquemaRama = z
+  .object({ cuando: esquemaCondicion.optional(), dice: z.array(esquemaPaso) })
+  .transform((json): Rama => ({ condicion: json.cuando, pasos: json.dice }));
 
-const npc = z.object({
-  dialogo: z.array(rama),
-  alVolver: alVolver.optional(),
-  // legacy (sin mapa)
+const esquemaAlVolver = z
+  .object({
+    conItem: z.union([z.string(), z.array(z.string()).min(1)]),
+    siLogrado: pasosOSecuencia,
+    siNo: pasosOSecuencia,
+  })
+  .transform((json): AlVolver => ({
+    conItem: typeof json.conItem === 'string' ? [json.conItem] : json.conItem,
+    siLogrado: json.siLogrado,
+    siNo: json.siNo,
+  }));
+
+const esquemaAnimaciones = z.object({
+  idle: z.string().optional(),
+  caminar: z.string().optional(),
+  hablar: z.string().optional(),
+});
+
+/** Un elemento de "layout" del formato v1 (solo se usa sin mapa de Tiled). */
+const esquemaElementoLayout = z.looseObject({ tipo: z.string() });
+
+const esquemaInterlocutor = z.object({
+  dialogo: z.array(esquemaRama),
+  alVolver: esquemaAlVolver.optional(),
+  // Formato v1, solo sin mapa de Tiled:
   x: z.number().optional(),
   y: z.number().optional(),
   radio: z.number().optional(),
-  forma: formaLegacy.optional(),
-  props: z.array(z.looseObject({ tipo: z.string() })).optional(),
+  forma: z.object({ tipo: z.literal('rect'), w: z.number(), h: z.number() }).optional(),
+  props: z.array(esquemaElementoLayout).optional(),
 });
 
-export const contenido = z.object({
+const esquemaPersonaje = z.object({
+  idioma: z.enum(['es', 'en']),
+  sprite: z.string(),
+  /** Milisegundos por letra al escribir su texto (un personaje lento escribe despacio). */
+  velocidad: z.number().positive().optional(),
+  animaciones: esquemaAnimaciones.optional(),
+});
+
+const esquemaJugador = z.object({
+  personaje: z.string(),
+  animaciones: esquemaAnimaciones.optional(),
+  /** Píxeles lógicos por segundo. */
+  velocidadX: z.number().positive().default(240),
+  velocidadY: z.number().positive().default(110),
+  /** Distancia a la que se avisa de algo interactivo. */
+  radioAviso: z.number().positive().default(160),
+});
+
+const esquemaCamara = z.object({
+  modo: z.enum(['follow', 'rails', 'pan']).default('follow'),
+  zonaMuerta: z.number().nonnegative().default(280),
+  suavizado: z.number().min(0).max(1).default(0.1),
+  seguirY: z.number().min(0).max(1).default(0.04),
+  inercia: z.number().min(0).max(1).default(0.92),
+  rebote: z.number().min(0).default(0.05),
+  // Formato v1, solo sin mapa de Tiled:
+  enfoques: z.array(z.object({ x: z.number(), y: z.number().optional(), zoom: z.number().optional() })).optional(),
+});
+
+const esquemaMundo = z.object({
+  /** Tamaño de diseño. El motor escala a la pantalla real manteniendo la proporción. */
+  logico: z.tuple([z.number().positive(), z.number().positive()]).default([1280, 720]),
+  fondo: z.string().optional(),
+  camara: esquemaCamara.prefault({}),
+  sonidos: z
+    .object({ tap: z.string().optional(), cerca: z.string().optional(), musica: z.string().optional() })
+    .optional(),
+  // Formato v1, solo sin mapa de Tiled:
+  ancho: z.number().positive().optional(),
+  alto: z.number().positive().optional(),
+  piso: z.tuple([z.number(), z.number()]).optional(),
+  inicio: z.number().optional(),
+  capas: z
+    .array(z.object({ asset: z.string(), parallax: z.number().default(1), depth: z.number().default(0) }))
+    .optional(),
+});
+
+const esquemaEstado = z.object({
+  objetivos: z.array(z.string()).default([]),
+  /** Variables libres. "charlas.*" declara todas las que empiezan con "charlas.". */
+  variables: z.array(z.string()).default([]),
+  /** Cómo nombrar cada objetivo en {faltan}: { "tortillas": "las tortillas" }. */
+  lista: z.record(z.string(), z.string()).optional(),
+  dinero: z.number().optional(),
+});
+
+const esquemaSalida = z.object({
+  destino: z.string(),
+  requiere: esquemaCondicion.optional(),
+  siBloqueada: pasosOSecuencia.optional(),
+  flecha: z.object({ visibleCuando: esquemaCondicion.optional(), texto: z.string().optional() }).optional(),
+  // Formato v1, solo sin mapa de Tiled:
+  x: z.number().optional(),
+});
+
+export const esquemaContenido = z.object({
   meta: z.object({
     id: z.string().min(1),
     titulo: z.string(),
-    personajes: z.record(z.string(), z.object({
-      idioma: z.enum(['es', 'en']),
-      sprite: z.string(),
-      velocidad: z.number().positive().optional(),
-      animaciones: animaciones.optional(),
-    })),
+    personajes: z.record(z.string(), esquemaPersonaje),
   }),
-  jugador: z.object({
-    personaje: z.string(),
-    animaciones: animaciones.optional(),
-    velocidadX: z.number().positive().default(240),
-    velocidadY: z.number().positive().default(110),
-    radioAviso: z.number().positive().default(160),
-  }).optional(),
-  mundo: z.object({
-    logico: z.tuple([z.number().positive(), z.number().positive()]).default([1280, 720]),
-    fondo: z.string().optional(),
-    camara: z.object({
-      modo: z.enum(['follow', 'rails', 'pan']).default('follow'),
-      zonaMuerta: z.number().nonnegative().default(280),
-      suavizado: z.number().min(0).max(1).default(0.1),
-      seguirY: z.number().min(0).max(1).default(0.04),
-      inercia: z.number().min(0).max(1).default(0.92),
-      rebote: z.number().min(0).default(0.05),
-      enfoques: z.array(z.object({ x: z.number(), y: z.number().optional(), zoom: z.number().optional() })).optional(),
-    }).prefault({}),
-    sonidos: z.object({ tap: z.string().optional(), cerca: z.string().optional(), musica: z.string().optional() }).optional(),
-    // legacy (sin mapa)
-    ancho: z.number().positive().optional(),
-    alto: z.number().positive().optional(),
-    piso: z.tuple([z.number(), z.number()]).optional(),
-    inicio: z.number().optional(),
-    capas: z.array(z.object({ asset: z.string(), parallax: z.number().default(1), depth: z.number().default(0) })).optional(),
-  }).prefault({}),
-  estado: z.object({
-    objetivos: z.array(z.string()).default([]),
-    variables: z.array(z.string()).default([]),
-    lista: z.record(z.string(), z.string()).optional(),
-    dinero: z.number().optional(),
-  }).prefault({}),
-  secuencias: z.record(z.string(), z.array(paso)).default({}),
-  npcs: z.record(z.string(), npc).default({}),
-  interactivos: z.record(z.string(), npc).default({}),
-  comentarios: z.record(z.string(), z.array(linea)).default({}),
-  salida: z.object({
-    destino: z.string(),
-    requiere: condicion.optional(),
-    siBloqueada: pasosORef.optional(),
-    flecha: z.object({ visibleCuando: condicion.optional(), texto: z.string().optional() }).optional(),
-    x: z.number().optional(), // legacy
-  }).optional(),
-  layout: z.array(z.looseObject({ tipo: z.string() })).optional(), // legacy
+  jugador: esquemaJugador.optional(),
+  mundo: esquemaMundo.prefault({}),
+  estado: esquemaEstado.prefault({}),
+  secuencias: z.record(z.string(), z.array(esquemaPaso)).default({}),
+  npcs: z.record(z.string(), esquemaInterlocutor).default({}),
+  interactivos: z.record(z.string(), esquemaInterlocutor).default({}),
+  comentarios: z.record(z.string(), z.array(esquemaLinea)).default({}),
+  salida: esquemaSalida.optional(),
+  // Formato v1, solo sin mapa de Tiled:
+  layout: z.array(esquemaElementoLayout).optional(),
 });
 
-export type Contenido = z.output<typeof contenido>;
-export type Npc = z.output<typeof npc>;
-export type AlVolver = z.output<typeof alVolver>;
-export type Personaje = Contenido['meta']['personajes'][string];
+/** El contenido de un nivel, ya validado y con los pasos convertidos. */
+export type Contenido = z.output<typeof esquemaContenido>;
+export type Personaje = z.output<typeof esquemaPersonaje>;
+export type ElementoLayout = z.output<typeof esquemaElementoLayout>;
+export type DeclaracionDeEstado = Contenido['estado'];
 
-export const rutaZod = (path: PropertyKey[]) =>
-  path.reduce<string>((s, k) => (typeof k === 'number' ? `${s}[${k}]` : s ? `${s}.${String(k)}` : String(k)), '');
+/** Convierte la ruta de un error de Zod en texto legible: ["npcs", "tortu", "dialogo", 0] → "npcs.tortu.dialogo[0]". */
+export function rutaLegible(ruta: PropertyKey[]): string {
+  let texto = '';
+  for (const parte of ruta) {
+    if (typeof parte === 'number') texto += `[${parte}]`;
+    else if (texto === '') texto = String(parte);
+    else texto += `.${String(parte)}`;
+  }
+  return texto;
+}

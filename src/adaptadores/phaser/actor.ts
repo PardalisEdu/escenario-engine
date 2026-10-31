@@ -1,100 +1,141 @@
-// Un personaje que camina dentro del piso: el jugador o un NPC (§7).
+/**
+ * Un personaje que camina dentro del piso: el jugador o un NPC (§7).
+ *
+ * La posición del actor es su «punto de pie» (abajo al centro del sprite).
+ * El orden de dibujo es esa y, así quien está más abajo en la pantalla queda delante.
+ */
 import * as Phaser from 'phaser';
-import type { Mira, Vec } from '../../core/esquema';
-import { avanzar, llego } from '../../core/geometria';
+import type { Mira, Punto } from '../../core/esquema';
+import { avanzarHacia, haLlegado } from '../../core/geometria';
 
-export type Anim = 'idle' | 'caminar' | 'hablar';
+export type Animacion = 'idle' | 'caminar' | 'hablar';
+
+export interface OpcionesDelActor {
+  /** Claves de las animaciones (atlas). Las que falten se reemplazan: sin "hablar" usa "idle". */
+  animaciones?: Partial<Record<Animacion, string>>;
+  /** Píxeles por segundo en cada eje. */
+  velocidad?: { x: number; y: number };
+  /** Si no tiene animación de caminar, rebota 2 px al moverse. Se apaga con movimiento reducido. */
+  rebotarAlCaminar?: boolean;
+}
 
 export class Actor {
-  sprite: Phaser.GameObjects.Sprite;
-  pos: Vec;
+  readonly sprite: Phaser.GameObjects.Sprite;
+  posicion: Punto;
   mira: Mira = 'derecha';
-  private destino?: Vec;
-  private alLlegar?: () => void;
-  private t = 0;
-  private actual?: Anim;
+
+  private readonly animaciones: Partial<Record<Animacion, string>>;
+  private readonly velocidad: { x: number; y: number };
+  private readonly rebotarAlCaminar: boolean;
+  private animacionActual?: Animacion;
+  private destino?: Punto;
+  private avisarLlegada?: () => void;
+  private segundosCaminando = 0;
 
   constructor(
-    private scene: Phaser.Scene,
-    pie: Vec,
+    private readonly escena: Phaser.Scene,
+    puntoDePie: Punto,
     textura: string,
-    private anims: Partial<Record<Anim, string>> = {},
-    private vx = 240,
-    private vy = 110,
-    private bob = true,
+    opciones: OpcionesDelActor = {},
   ) {
-    this.pos = { ...pie };
-    this.sprite = scene.add.sprite(pie.x, pie.y, textura).setOrigin(0.5, 1);
+    this.animaciones = opciones.animaciones ?? {};
+    this.velocidad = opciones.velocidad ?? { x: 240, y: 110 };
+    this.rebotarAlCaminar = opciones.rebotarAlCaminar ?? true;
+    this.posicion = { ...puntoDePie };
+    this.sprite = escena.add.sprite(puntoDePie.x, puntoDePie.y, textura).setOrigin(0.5, 1);
     this.animar('idle');
-    this.sincronizar();
+    this.actualizarSprite();
   }
 
-  get caminando() { return !!this.destino; }
-
-  mirar(m: Mira) {
-    this.mira = m;
-    this.sprite.setFlipX(m === 'izquierda');
+  get caminando(): boolean {
+    return this.destino !== undefined;
   }
 
-  animar(a: Anim) {
-    if (this.actual === a) return;
-    this.actual = a;
-    const clave = this.anims[a] ?? (a === 'hablar' ? this.anims.idle : undefined);
-    if (clave && this.scene.anims.exists(clave)) this.sprite.play(clave);
+  /** El arte mira a la derecha; para mirar a la izquierda se voltea el sprite. */
+  mirarHacia(mira: Mira): void {
+    this.mira = mira;
+    this.sprite.setFlipX(mira === 'izquierda');
+  }
+
+  animar(animacion: Animacion): void {
+    if (this.animacionActual === animacion) return;
+    this.animacionActual = animacion;
+
+    let clave = this.animaciones[animacion];
+    if (clave === undefined && animacion === 'hablar') clave = this.animaciones.idle;
+
+    if (clave && this.escena.anims.exists(clave)) this.sprite.play(clave);
     else this.sprite.stop();
   }
 
-  /** Camina hasta `destino`. La promesa se resuelve al llegar, al atorarse o con detener(). */
-  caminarA(destino: Vec): Promise<void> {
-    this.alLlegar?.();
+  /**
+   * Empieza a caminar hacia `destino`. La promesa termina al llegar, al quedar atorado
+   * o cuando se llama a `detener()` (por ejemplo, porque llegó otro toque).
+   */
+  caminarA(destino: Punto): Promise<void> {
+    this.detener(); // termina la caminata anterior, si había
     this.destino = destino;
-    return new Promise((res) => (this.alLlegar = res));
+    return new Promise((resolver) => {
+      this.avisarLlegada = resolver;
+    });
   }
 
-  detener() {
+  /** Se queda donde está y termina la caminata en curso. */
+  detener(): void {
+    const avisar = this.avisarLlegada;
     this.destino = undefined;
+    this.avisarLlegada = undefined;
     this.animar('idle');
-    const fin = this.alLlegar;
-    this.alLlegar = undefined;
-    fin?.();
+    avisar?.();
   }
 
-  /** Teclado: mueve en la dirección dada (-1..1 por eje). */
-  empujar(dx: number, dy: number, dt: number, caminable: (p: Vec) => boolean) {
-    if (!dx && !dy) {
-      if (!this.destino) this.animar('idle');
+  /** Movimiento con teclado. `direccion` va de -1 a 1 en cada eje; (0, 0) = sin teclas. */
+  moverConTeclado(direccion: Punto, segundos: number, esCaminable: (punto: Punto) => boolean): void {
+    const hayTeclas = direccion.x !== 0 || direccion.y !== 0;
+    if (!hayTeclas) {
+      if (!this.caminando) this.animar('idle');
       return;
     }
-    this.destino = undefined;
-    this.paso({ x: this.pos.x + dx * 1e4, y: this.pos.y + dy * 1e4 }, dt, caminable);
+    // Un destino muy lejano en esa dirección: así se usa la misma lógica de deslizamiento que al tocar.
+    const lejos = 10_000;
+    this.darUnPaso({ x: this.posicion.x + direccion.x * lejos, y: this.posicion.y + direccion.y * lejos }, segundos, esCaminable);
   }
 
-  update(dt: number, caminable: (p: Vec) => boolean) {
+  /** Se llama en cada cuadro del juego. */
+  actualizar(segundos: number, esCaminable: (punto: Punto) => boolean): void {
     if (this.destino) {
-      const antes = this.pos;
-      this.paso(this.destino, dt, caminable);
-      if (llego(this.pos, this.destino) || this.pos === antes) this.detener();
+      const seMovio = this.darUnPaso(this.destino, segundos, esCaminable);
+      if (!seMovio || haLlegado(this.posicion, this.destino)) this.detener();
     }
-    this.sincronizar();
+    this.actualizarSprite();
   }
 
-  colocar(p: Vec) {
-    this.pos = { ...p };
-    this.sincronizar();
+  colocarEn(punto: Punto): void {
+    this.posicion = { ...punto };
+    this.actualizarSprite();
   }
 
-  private paso(destino: Vec, dt: number, caminable: (p: Vec) => boolean) {
-    const nuevo = avanzar(this.pos, destino, this.vx, this.vy, dt, caminable);
-    if (nuevo === this.pos) return;
-    if (Math.abs(nuevo.x - this.pos.x) > 0.01) this.mirar(nuevo.x < this.pos.x ? 'izquierda' : 'derecha');
-    this.pos = nuevo;
-    this.t += dt;
+  /** Devuelve false si no pudo moverse (llegó o está atorado). */
+  private darUnPaso(destino: Punto, segundos: number, esCaminable: (punto: Punto) => boolean): boolean {
+    const siguiente = avanzarHacia(this.posicion, destino, this.velocidad, segundos, esCaminable);
+    const seMovio = siguiente.x !== this.posicion.x || siguiente.y !== this.posicion.y;
+    if (!seMovio) return false;
+
+    if (siguiente.x < this.posicion.x) this.mirarHacia('izquierda');
+    if (siguiente.x > this.posicion.x) this.mirarHacia('derecha');
+    this.posicion = siguiente;
+    this.segundosCaminando += segundos;
     this.animar('caminar');
+    return true;
   }
 
-  private sincronizar() {
-    // Sin animación de caminar: se desliza con un bob suave de 2 px.
-    const bob = this.bob && this.caminando && !this.anims.caminar ? Math.abs(Math.sin(this.t * 12)) * -2 : 0;
-    this.sprite.setPosition(this.pos.x, this.pos.y + bob).setDepth(this.pos.y);
+  private actualizarSprite(): void {
+    let rebote = 0;
+    const deslizaSinAnimacion = this.caminando && this.animaciones.caminar === undefined;
+    if (this.rebotarAlCaminar && deslizaSinAnimacion) {
+      rebote = -2 * Math.abs(Math.sin(this.segundosCaminando * 12));
+    }
+    this.sprite.setPosition(this.posicion.x, this.posicion.y + rebote);
+    this.sprite.setDepth(this.posicion.y);
   }
 }
