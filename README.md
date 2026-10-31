@@ -16,6 +16,7 @@ Corre sobre **Phaser 4** en el navegador. Está escrito en TypeScript para **Bun
 | Si quieres… | Lee |
 | --- | --- |
 | Usar el motor en una página | este README, sección [Uso desde un host](#uso-desde-un-host) |
+| Usar el motor en una página, paso a paso | [`docs/USO.md`](docs/USO.md) |
 | Dibujar un mapa o escribir un nivel | [`docs/NIVELES.md`](docs/NIVELES.md) |
 | Entender cómo está hecho por dentro, o modificarlo | [`AGENTS.md`](AGENTS.md) (para personas y agentes de IA) |
 | Escribir código para el proyecto | [`docs/ESTILO.md`](docs/ESTILO.md) |
