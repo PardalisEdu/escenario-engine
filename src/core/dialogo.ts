@@ -10,7 +10,7 @@
  * - `abort()` termina el paso actual y libera todo; el host lo usa, por ejemplo, al abrir un menú.
  * - Una secuencia puede llamar a otra, hasta 8 niveles de profundidad.
  */
-import type { AlVolver, Contenido, DestinoCamina, Linea, Opcion, Paso, PasosOSecuencia, Valor } from './esquema';
+import type { AlVolver, Contenido, DestinoCamina, Linea, Opcion, Paso, PasosOSecuencia, Punto, Valor } from './esquema';
 import type { GameState } from './estado';
 
 /** Lo que devuelve un minijuego al terminar (§4.2). */
@@ -31,6 +31,11 @@ export interface AccionesDelMundo {
   reproducirEfecto(nombre: string, cancelacion: AbortSignal): Promise<void>;
   caminar(quien: string | undefined, destino: DestinoCamina, cancelacion: AbortSignal): Promise<void>;
   jugarMinijuego(clave: string, config: unknown, cancelacion: AbortSignal): Promise<MiniGameResult>;
+  /** Lleva la cámara a un personaje (por id) o a un lugar (punto del mapa o coordenadas). */
+  enfocar(objetivo: string | Punto, zoom: number, cancelacion: AbortSignal): Promise<void>;
+  esperar(segundos: number, cancelacion: AbortSignal): Promise<void>;
+  mostrarTitulo(texto: string, audio: string | undefined, cancelacion: AbortSignal): Promise<void>;
+  hacerGesto(quien: string | undefined, gesto: string, cancelacion: AbortSignal): Promise<void>;
 }
 
 export type TipoDeInterlocutor = 'npcs' | 'interactivos';
@@ -173,6 +178,24 @@ export class DialogueRuntime {
 
       case 'condicional':
         if (this.estado.cumple(paso.condicion)) await this.ejecutarPasos(paso.pasos, contexto);
+        break;
+
+      case 'enfoca':
+        await esperarOCancelar(this.mundo.enfocar(paso.objetivo, paso.zoom, cancelacion), cancelacion);
+        break;
+
+      case 'espera':
+        await esperarOCancelar(this.mundo.esperar(paso.segundos, cancelacion), cancelacion);
+        break;
+
+      case 'titulo': {
+        const texto = this.estado.completarTexto(paso.texto);
+        await esperarOCancelar(this.mundo.mostrarTitulo(texto, paso.audio, cancelacion), cancelacion);
+        break;
+      }
+
+      case 'gesto':
+        await esperarOCancelar(this.mundo.hacerGesto(paso.quien, paso.nombre, cancelacion), cancelacion);
         break;
     }
   }

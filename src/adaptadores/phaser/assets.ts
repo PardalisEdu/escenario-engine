@@ -141,6 +141,7 @@ export function listaDeAssetsDelNivel(contenido: Contenido, mundo: Mundo): Pedid
   // Personajes que aparecen en pantalla: el jugador y los NPCs del mapa
   const idsEnPantalla = Object.keys(mundo.npcs);
   if (contenido.jugador) idsEnPantalla.push(contenido.jugador.personaje);
+  if (contenido.acompanante) idsEnPantalla.push(contenido.acompanante.personaje);
   for (const id of idsEnPantalla) {
     const personaje = contenido.meta.personajes[id];
     if (!personaje) continue;
@@ -150,7 +151,7 @@ export function listaDeAssetsDelNivel(contenido: Contenido, mundo: Mundo): Pedid
   for (const animacion of Object.values(contenido.jugador?.animaciones ?? {})) pedir(animacion, 'atlas');
 
   // Voces e imágenes de opciones, en cualquier parte del diálogo
-  buscarClavesEnDialogos([contenido.secuencias, contenido.npcs, contenido.interactivos, contenido.comentarios, contenido.salida], pedir);
+  buscarClavesEnDialogos([contenido.secuencias, contenido.npcs, contenido.interactivos, contenido.comentarios, contenido.salida, contenido.intro], pedir);
 
   return [...pedidos].map(([clave, tipo]) => ({ clave, tipo }));
 }

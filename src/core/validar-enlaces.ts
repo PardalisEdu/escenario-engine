@@ -6,12 +6,26 @@
  */
 import { estaDeclarado, nombresUsados } from './condiciones';
 import type { Diagnostico } from './diagnostico';
-import type { Condicion, Contenido, Paso } from './esquema';
+import type { Condicion, Contenido, Paso, PasosOSecuencia } from './esquema';
 import { recorrerPasos } from './recorrer-pasos';
 
 /** Tabla global de efectos. El adaptador de Phaser implementa cada uno (efectos.ts). */
 export const EFECTOS = ['magia', 'confeti'] as const;
 export type NombreDeEfecto = (typeof EFECTOS)[number];
+
+/**
+ * Gestos que todo personaje sabe hacer sin atlas: el adaptador de Phaser los anima moviendo el sprite (actor.ts).
+ * Un personaje también puede tener gestos propios: cualquier animación extra en sus "animaciones".
+ */
+export const GESTOS = ['saltar', 'saludar', 'asentir', 'sorpresa'] as const;
+export type NombreDeGesto = (typeof GESTOS)[number];
+
+/** Pasos que no caben en la intro: quien la salta no debe perderse estado ni quedarse a medio minijuego. */
+const PASOS_PROHIBIDOS_EN_LA_INTRO: Record<string, string> = {
+  pon: '"pon"',
+  juego: '"juego"',
+  elige: '"elige"',
+};
 
 /**
  * @param minijuegos claves de las fábricas registradas por el host; si se omite
@@ -32,7 +46,9 @@ export function revisarEnlaces(contenido: Contenido, minijuegos: string[] | unde
     diagnostico.error(`jugador.personaje "${jugador.personaje}" no existe en meta.personajes`);
   }
 
+  revisarAcompanante(contenido, diagnostico);
   revisarRamas(contenido, revisarCondicion, diagnostico);
+  if (contenido.intro) revisarIntro(contenido, contenido.intro, diagnostico);
 
   if (contenido.salida) {
     revisarCondicion(contenido.salida.requiere, 'salida.requiere');
@@ -51,6 +67,48 @@ export function revisarEnlaces(contenido: Contenido, minijuegos: string[] | unde
   });
 
   revisarCiclosDeSecuencias(contenido.secuencias, diagnostico);
+}
+
+function revisarAcompanante(contenido: Contenido, diagnostico: Diagnostico): void {
+  const acompanante = contenido.acompanante;
+  if (!acompanante) return;
+  if (!contenido.jugador) {
+    diagnostico.error('acompanante: necesita un "jugador" a quien seguir');
+  }
+  if (!Object.hasOwn(contenido.meta.personajes, acompanante.personaje)) {
+    diagnostico.error(`acompanante.personaje "${acompanante.personaje}" no existe en meta.personajes`);
+  }
+  if (acompanante.personaje === contenido.jugador?.personaje) {
+    diagnostico.error('acompanante.personaje no puede ser el mismo personaje que jugador.personaje');
+  }
+}
+
+/**
+ * La intro solo se mira y se puede saltar en cualquier momento, así que no puede cambiar el estado
+ * ni pedir decisiones. Se revisan también las secuencias que usa.
+ */
+function revisarIntro(contenido: Contenido, intro: PasosOSecuencia, diagnostico: Diagnostico): void {
+  const secuenciasVistas = new Set<string>();
+
+  const revisarLista = (pasos: Paso[], ruta: string) => {
+    pasos.forEach((paso, i) => revisarPasoDeLaIntro(paso, `${ruta}[${i}]`));
+  };
+  const revisarSecuencia = (nombre: string) => {
+    if (secuenciasVistas.has(nombre) || !Object.hasOwn(contenido.secuencias, nombre)) return;
+    secuenciasVistas.add(nombre);
+    revisarLista(contenido.secuencias[nombre]!, `secuencias.${nombre}`);
+  };
+  const revisarPasoDeLaIntro = (paso: Paso, ruta: string) => {
+    if (Object.hasOwn(PASOS_PROHIBIDOS_EN_LA_INTRO, paso.tipo)) {
+      const nombre = PASOS_PROHIBIDOS_EN_LA_INTRO[paso.tipo];
+      diagnostico.error(`${ruta}: ${nombre} no se permite en la intro (se puede saltar); muévelo al primer diálogo`);
+    }
+    if (paso.tipo === 'condicional') revisarLista(paso.pasos, `${ruta}.dice`);
+    if (paso.tipo === 'secuencia') revisarSecuencia(paso.nombre);
+  };
+
+  if (typeof intro === 'string') revisarSecuencia(intro);
+  else revisarLista(intro, 'intro');
 }
 
 /** Condiciones de las ramas, ramas inalcanzables y "conItem" de alVolver. */
@@ -136,7 +194,33 @@ function revisarPaso(
 
     case 'secuencia':
       break; // la referencia se revisa en referenciaASecuencia
+
+    case 'gesto':
+      if (!sabeHacerElGesto(contenido, paso.quien, paso.nombre)) {
+        diagnostico.error(
+          `gesto "${paso.nombre}" en ${ruta}: no es un gesto del motor (${GESTOS.join(', ')}) ` +
+            `ni una animación de ${paso.quien ?? 'el jugador'}`,
+        );
+      }
+      break; // "quien" se revisa contra el mapa en la fase 4
+
+    case 'enfoca':
+    case 'espera':
+    case 'titulo':
+      break; // el objetivo de "enfoca" se revisa contra el mapa en la fase 4
   }
+}
+
+/** Un gesto del motor, o una animación propia del personaje (o del jugador). */
+function sabeHacerElGesto(contenido: Contenido, quien: string | undefined, gesto: string): boolean {
+  if ((GESTOS as readonly string[]).includes(gesto)) return true;
+
+  const idDelPersonaje = quien ?? contenido.jugador?.personaje;
+  const esElJugador = idDelPersonaje === contenido.jugador?.personaje;
+  if (esElJugador && Object.hasOwn(contenido.jugador?.animaciones ?? {}, gesto)) return true;
+
+  if (idDelPersonaje === undefined || !Object.hasOwn(contenido.meta.personajes, idDelPersonaje)) return false;
+  return Object.hasOwn(contenido.meta.personajes[idDelPersonaje]!.animaciones ?? {}, gesto);
 }
 
 /** Detecta llamadas circulares entre secuencias antes de jugar (evita esperar al límite de profundidad en runtime). */

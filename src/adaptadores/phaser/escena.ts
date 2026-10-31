@@ -8,6 +8,9 @@
  *   conversacion.ts      globos, opciones y voz
  *   minijuego.ts         monta y desmonta minijuegos
  *   efectos.ts           partículas y sonidos de los pasos "efecto"
+ *   acompanante.ts       el acompañante que sigue al jugador
+ *   cinematica.ts        franjas de cine y botón para saltar la intro
+ *   titulo.ts            tarjeta de título de los pasos "titulo"
  *
  * Esta clase también es el PlayerController (§7.2): recibe toques y teclado,
  * y es el "mundo" que usa el DialogueRuntime para ejecutar los pasos.
@@ -16,16 +19,18 @@
  */
 import * as Phaser from 'phaser';
 import { DialogueRuntime, type AccionesDelMundo, type MiniGameResult } from '../../core/dialogo';
-import type { DestinoCamina, Idioma, Linea, Opcion, Punto } from '../../core/esquema';
+import type { DestinoCamina, Idioma, Linea, Opcion, PasosOSecuencia, Punto } from '../../core/esquema';
 import type { GameState } from '../../core/estado';
 import { ajustarAlPiso, cajaDeForma, puntoDentroDeForma, puntoDentroDePoligono } from '../../core/geometria';
 import type { SaveBlob } from '../../core/partida';
 import { EscenarioError, type Nivel } from '../../core/validar';
+import { SeguimientoDelAcompanante } from './acompanante';
 import type { Actor } from './actor';
 import { GestorDeAssets, listaDeAssetsDelNivel } from './assets';
 import { AvisosDeCercania } from './avisos';
 import { mostrarBarraDeCarga } from './barra-de-carga';
 import { Camara } from './camara';
+import { Cinematica, esperarEnLaEscena } from './cinematica';
 import { ComentariosPorZona } from './comentarios';
 import { construirMundo, type ElementosDelMundo, type Interactuable } from './construir-mundo';
 import { Conversacion } from './conversacion';
@@ -34,6 +39,7 @@ import { crearTexturaDeChispa, reproducirEfecto } from './efectos';
 import { FlechaDeSalida } from './flecha-de-salida';
 import { PROFUNDIDAD, type EscalaDeInterfaz } from './interfaz';
 import { jugarMinijuego, type MiniGameFactory } from './minijuego';
+import { mostrarTarjetaDeTitulo } from './titulo';
 
 export interface DatosDeLaEscena {
   nivel: Nivel;
@@ -81,6 +87,9 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
   private conversacion!: Conversacion;
   private flecha?: FlechaDeSalida;
   private teclas?: TeclasDeMovimiento;
+  private acompanante?: SeguimientoDelAcompanante;
+  /** Existe solo mientras corre la intro. */
+  private cinematica?: Cinematica;
 
   /** El toque en curso: dónde empezó y si ya se convirtió en arrastre. */
   private toque?: { inicio: Punto; esArrastre: boolean; sobreUnBoton: boolean };
@@ -127,6 +136,7 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
 
     crearTexturaDeChispa(this);
     this.elementos = construirMundo(this, this.datos.nivel, this.datos.partida);
+    this.crearSeguimientoDelAcompanante();
     this.crearFlechaDeSalida();
     this.crearPiezas();
     this.configurarEntrada();
@@ -136,6 +146,8 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     this.runtime = new DialogueRuntime(this.contenido, this.datos.estado, this);
     this.datos.estado.alCambiar = () => this.actualizarFlecha();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cinematica?.destruir();
+      this.cinematica = undefined;
       this.datos.estado.alCambiar = undefined;
       this.avisos.quitar();
       this.conversacion.cancelarComentario();
@@ -145,6 +157,9 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
 
     this.lista = true;
     this.datos.alEstarLista();
+
+    // La intro se ve al empezar el nivel por primera vez; quien vuelve con una partida guardada ya la vio.
+    if (this.contenido.intro && !this.datos.partida) this.reproducirIntro(this.contenido.intro);
   }
 
   override update(_tiempo: number, milisegundos: number): void {
@@ -154,6 +169,10 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
 
     if (jugador && !this.runtime.ocupado) this.moverJugadorConTeclado(jugador, segundos);
     jugador?.actualizar(segundos, this.esCaminable);
+    if (jugador && this.acompanante) {
+      this.acompanante.actualizar(jugador);
+      this.acompanante.actor.actualizar(segundos, this.esCaminable);
+    }
     for (const npc of this.elementos.npcs.values()) npc.actualizar(segundos, this.esCaminable);
 
     if (jugador && !this.runtime.ocupado) {
@@ -163,7 +182,10 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
       this.avisos.quitar();
     }
 
+    // Un "enfoca" deja la cámara quieta hasta que termina el diálogo; luego vuelve sola al jugador.
+    if (this.camara.estaEnfocada && !this.runtime.ocupado) this.camara.soltarEnfoque();
     this.camara.actualizar(segundos);
+    this.cinematica?.actualizar();
   }
 
   // ─── Armado ────────────────────────────────────────────────────────────────
@@ -190,6 +212,30 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     this.comentarios = new ComentariosPorZona(this.mundo.zonasDeComentario, this.contenido.comentarios, this.datos.azar, (linea) =>
       this.conversacion.decirComentario(linea, this.datos.estado.completarTexto(linea.texto)),
     );
+  }
+
+  private crearSeguimientoDelAcompanante(): void {
+    const actor = this.elementos.acompanante;
+    const datos = this.contenido.acompanante;
+    if (actor && datos) this.acompanante = new SeguimientoDelAcompanante(actor, datos.distancia, this.mundo.pisos);
+  }
+
+  /** Corre los pasos de la intro dentro del marco de cine. Saltarla aborta el diálogo y quita el marco. */
+  private async reproducirIntro(intro: PasosOSecuencia): Promise<void> {
+    const cinematica = new Cinematica(this, this.datos.escala, () => this.saltarIntro());
+    this.cinematica = cinematica;
+    cinematica.empezar();
+
+    await this.runtime?.ejecutar(intro);
+
+    const laEscenaSeCerro = this.cinematica !== cinematica;
+    if (laEscenaSeCerro) return;
+    this.cinematica = undefined;
+    await cinematica.terminar();
+  }
+
+  private saltarIntro(): void {
+    if (this.cinematica) this.runtime?.abort();
   }
 
   private crearFlechaDeSalida(): void {
@@ -262,6 +308,11 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     const objetivo = evento.target as HTMLElement | null;
     if (objetivo && (objetivo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(objetivo.tagName))) return;
     if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
+
+    if (evento.key === 'Escape') {
+      this.saltarIntro();
+      return;
+    }
 
     const esEnterOEspacio = evento.key === 'Enter' || evento.key === ' ';
     if (esEnterOEspacio) {
@@ -424,10 +475,14 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
 
     const alCancelar = () => actor.detener();
     cancelacion.addEventListener('abort', alCancelar, { once: true });
+    // Mientras un paso lo guía, el acompañante deja de seguir al jugador.
+    const guiaAlAcompanante = this.acompanante?.actor === actor;
+    if (guiaAlAcompanante) this.acompanante!.guiado = true;
     try {
       await actor.caminarA(ajustarAlPiso(objetivo, this.mundo.pisos));
     } finally {
       cancelacion.removeEventListener('abort', alCancelar);
+      if (guiaAlAcompanante) this.acompanante!.guiado = false;
     }
   }
 
@@ -442,6 +497,24 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
       cdn: this.datos.cdn,
       cancelacion,
     });
+  }
+
+  enfocar(objetivo: string | Punto, zoom: number, cancelacion: AbortSignal): Promise<void> {
+    return this.camara.enfocar(this.puntoAEnfocar(objetivo), zoom, cancelacion);
+  }
+
+  esperar(segundos: number, cancelacion: AbortSignal): Promise<void> {
+    return esperarEnLaEscena(this, segundos * 1000, cancelacion);
+  }
+
+  mostrarTitulo(texto: string, audio: string | undefined, cancelacion: AbortSignal): Promise<void> {
+    this.avisos.quitar();
+    const datos = { escena: this, voz: this.conversacion.voz, texto, audio, idioma: this.datos.idiomaBase, escala: this.datos.escala };
+    return mostrarTarjetaDeTitulo(datos, cancelacion);
+  }
+
+  async hacerGesto(quien: string | undefined, gesto: string, cancelacion: AbortSignal): Promise<void> {
+    await this.actorQueCamina(quien)?.hacerGesto(gesto, cancelacion);
   }
 
   // ─── Para el motor ─────────────────────────────────────────────────────────
@@ -464,6 +537,7 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     this.flecha?.cambiarEscala(escala.botones);
     this.avisos.cambiarEscala(escala);
     this.conversacion.cambiarEscala(escala);
+    this.cinematica?.cambiarEscala(escala);
   }
 
   // ─── Ayudantes ─────────────────────────────────────────────────────────────
@@ -474,15 +548,25 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
    */
   private actorQueHabla(hablante: string): Actor | undefined {
     if (hablante === this.contenido.jugador?.personaje) return this.elementos.jugador;
+    if (hablante === this.contenido.acompanante?.personaje) return this.elementos.acompanante;
     const npc = this.elementos.npcs.get(hablante);
     if (npc) return npc;
     const interlocutor = this.runtime?.idDelInterlocutor;
     return interlocutor ? this.elementos.npcs.get(interlocutor) : undefined;
   }
 
-  /** Sin "quien" (o con el id del jugador) camina el jugador; si no, el NPC indicado. */
+  /** Sin "quien" (o con el id del jugador) se mueve el jugador; si no, el acompañante o el NPC indicado. */
   private actorQueCamina(quien: string | undefined): Actor | undefined {
     if (quien === undefined || quien === this.contenido.jugador?.personaje) return this.elementos.jugador;
+    if (quien === this.contenido.acompanante?.personaje) return this.elementos.acompanante;
     return this.elementos.npcs.get(quien);
+  }
+
+  /** El centro de un personaje (a media altura) o un lugar del mapa. */
+  private puntoAEnfocar(objetivo: string | Punto): Punto {
+    if (typeof objetivo !== 'string') return objetivo;
+    const actor = this.actorQueCamina(objetivo);
+    if (actor) return { x: actor.posicion.x, y: actor.posicion.y - actor.sprite.displayHeight / 2 };
+    return this.mundo.puntos[objetivo]!; // la validación garantiza que es un personaje en pantalla o un punto
   }
 }

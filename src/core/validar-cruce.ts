@@ -18,6 +18,7 @@ export function revisarCruce(contenido: Contenido, mundo: Mundo, hayMapa: boolea
   revisarZonasDeComentario(contenido, mundo, diagnostico);
   revisarSalida(contenido, mundo, hayMapa, diagnostico);
   revisarCaminatas(contenido, mundo, diagnostico);
+  revisarAcompananteEnElMapa(contenido, mundo, diagnostico);
   if (hayMapa) advertirDatosDuplicados(contenido, diagnostico);
   else if (contenido.mundo.camara.enfoques) {
     diagnostico.advertencia('mundo.camara.enfoques está deprecado; usa puntos enfoqueCamara en Tiled');
@@ -84,26 +85,51 @@ function revisarSalida(contenido: Contenido, mundo: Mundo, hayMapa: boolean, dia
   }
 }
 
-/** Cada "camina" debe tener quién camine y, si va a un punto con nombre, que ese punto exista. */
+/**
+ * Cada "camina" y cada "gesto" deben tener quién los haga y, si van a un punto con nombre, que ese punto exista.
+ * Cada "enfoca" debe apuntar a alguien que esté en pantalla o a un punto del mapa.
+ */
 function revisarCaminatas(contenido: Contenido, mundo: Mundo, diagnostico: Diagnostico): void {
   const quienesPuedenCaminar = new Set(Object.keys(mundo.npcs));
   if (contenido.jugador) quienesPuedenCaminar.add(contenido.jugador.personaje);
+  if (contenido.acompanante) quienesPuedenCaminar.add(contenido.acompanante.personaje);
 
   recorrerPasos(contenido, {
     paso(paso, ruta) {
+      if (paso.tipo === 'enfoca') {
+        const objetivo = paso.objetivo;
+        const existe = typeof objetivo !== 'string' || quienesPuedenCaminar.has(objetivo) || Object.hasOwn(mundo.puntos, objetivo);
+        if (!existe) diagnostico.error(`enfoca "${objetivo}" en ${ruta}: no hay personaje en pantalla ni punto con ese nombre`);
+        return;
+      }
+      if (paso.tipo === 'gesto') {
+        if (paso.quien === undefined && !contenido.jugador) diagnostico.error(`gesto en ${ruta}: no hay jugador; indica "quien"`);
+        if (paso.quien !== undefined && !quienesPuedenCaminar.has(paso.quien)) {
+          diagnostico.error(`gesto en ${ruta}: "quien": "${paso.quien}" no es el jugador, el acompañante ni un NPC del mapa`);
+        }
+        return;
+      }
       if (paso.tipo !== 'camina') return;
 
       if (paso.quien === undefined && !contenido.jugador) {
         diagnostico.error(`camina en ${ruta}: no hay jugador; indica "quien"`);
       }
       if (paso.quien !== undefined && !quienesPuedenCaminar.has(paso.quien)) {
-        diagnostico.error(`camina en ${ruta}: "quien": "${paso.quien}" no es el jugador ni un NPC del mapa`);
+        diagnostico.error(`camina en ${ruta}: "quien": "${paso.quien}" no es el jugador, el acompañante ni un NPC del mapa`);
       }
       if (typeof paso.destino === 'string' && !Object.hasOwn(mundo.puntos, paso.destino)) {
         diagnostico.error(`camina "${paso.destino}" en ${ruta}: no hay punto con ese nombre`);
       }
     },
   });
+}
+
+/** El acompañante no puede ser también un NPC del mapa: el motor no sabría a cuál de los dos mover. */
+function revisarAcompananteEnElMapa(contenido: Contenido, mundo: Mundo, diagnostico: Diagnostico): void {
+  const id = contenido.acompanante?.personaje;
+  if (id !== undefined && Object.hasOwn(mundo.npcs, id)) {
+    diagnostico.error(`acompanante.personaje "${id}" también es un NPC del mapa; usa un personaje distinto`);
+  }
 }
 
 /** Con mapa, manda el mapa: las coordenadas del JSON v1 se ignoran (§5.4). */

@@ -79,6 +79,55 @@ describe('validación', () => {
     expect(validar({ config: npcSinMapa, mapa: mapaTortilleria }).errores).toContain('npcs.tito no tiene objeto de clase npc en la capa "npcs"');
   });
 
+  test('pasos de cine: enfoca (zoom 1 por defecto), espera, titulo y gesto', () => {
+    const contenido = copiaDelContenido();
+    contenido.secuencias.cine = [{ enfoca: { x: 300, y: 400 } }, { espera: 2 }, { titulo: 'Hola', audio: 'vo_hola' }, { gesto: 'sorpresa', quien: 'tortu' }];
+    const { nivel, errores } = validar({ config: contenido, mapa: mapaTortilleria });
+
+    expect(errores).toEqual([]);
+    expect(nivel!.contenido.secuencias.cine).toEqual([
+      { tipo: 'enfoca', objetivo: { x: 300, y: 400 }, zoom: 1 },
+      { tipo: 'espera', segundos: 2 },
+      { tipo: 'titulo', texto: 'Hola', audio: 'vo_hola' },
+      { tipo: 'gesto', nombre: 'sorpresa', quien: 'tortu' },
+    ]);
+  });
+
+  test('acompañante, intro, gestos y enfoques mal escritos dan errores que dicen qué hacer', () => {
+    const sinPersonaje = copiaDelContenido();
+    sinPersonaje.acompanante.personaje = 'axolotl';
+    expect(validar({ config: sinPersonaje, mapa: mapaTortilleria }).errores).toContain(
+      'acompanante.personaje "axolotl" no existe en meta.personajes',
+    );
+
+    const acompananteQueEsNpc = copiaDelContenido();
+    acompananteQueEsNpc.acompanante.personaje = 'tortu';
+    expect(validar({ config: acompananteQueEsNpc, mapa: mapaTortilleria }).errores).toContain(
+      'acompanante.personaje "tortu" también es un NPC del mapa; usa un personaje distinto',
+    );
+
+    const introQueCambiaElEstado = copiaDelContenido();
+    introQueCambiaElEstado.secuencias.premio = [{ pon: { tortillas: true } }];
+    introQueCambiaElEstado.intro.push({ secuencia: 'premio' });
+    expect(validar({ config: introQueCambiaElEstado, mapa: mapaTortilleria }).errores).toContain(
+      'secuencias.premio[0]: "pon" no se permite en la intro (se puede saltar); muévelo al primer diálogo',
+    );
+
+    const gestoDesconocido = copiaDelContenido();
+    gestoDesconocido.intro[2].gesto = 'bailar';
+    expect(validar({ config: gestoDesconocido, mapa: mapaTortilleria }).errores).toContain(
+      'gesto "bailar" en intro[2]: no es un gesto del motor (saltar, saludar, asentir, sorpresa) ni una animación de tortu',
+    );
+    gestoDesconocido.meta.personajes.tortu.animaciones = { bailar: 'tortu_bailar' };
+    expect(validar({ config: gestoDesconocido, mapa: mapaTortilleria }).errores).toEqual([]);
+
+    const enfoqueDesconocido = copiaDelContenido();
+    enfoqueDesconocido.intro[1].enfoca = 'comal';
+    expect(validar({ config: enfoqueDesconocido, mapa: mapaTortilleria }).errores).toContain(
+      'enfoca "comal" en intro[1]: no hay personaje en pantalla ni punto con ese nombre',
+    );
+  });
+
   test('errores del mapa: capa faltante, clase desconocida, salida duplicada y mapa malformado', () => {
     const mapa = copiaDelMapa();
     mapa.layers = mapa.layers.filter((capa) => capa.name !== 'piso');
@@ -216,6 +265,10 @@ describe('DialogueRuntime', () => {
       reproducirEfecto: async (nombre) => { registro.push(`efecto:${nombre}`); },
       caminar: async (_quien, destino) => { registro.push(`camina:${String(destino)}`); },
       jugarMinijuego: async () => resultadoDelMinijuego(),
+      enfocar: async (objetivo, zoom) => { registro.push(`enfoca:${String(objetivo)}:${zoom}`); },
+      esperar: async (segundos) => { registro.push(`espera:${segundos}`); },
+      mostrarTitulo: async (texto) => { registro.push(`titulo:${texto}`); },
+      hacerGesto: async (quien, gesto) => { registro.push(`gesto:${quien ?? 'jugador'}:${gesto}`); },
     };
   }
 
@@ -253,6 +306,23 @@ describe('DialogueRuntime', () => {
     await runtime.hablarCon('npcs', 'tortu'); // se ignora
     await primero;
     expect(registro.filter((r) => r.startsWith('camina'))).toHaveLength(1);
+  });
+
+  test('la intro ejecuta título, enfoques, gestos y esperas en orden', async () => {
+    const registro: string[] = [];
+    const runtime = new DialogueRuntime(contenido, new GameState(contenido.estado), mundoDePrueba(registro, () => ({ exito: false })));
+    await runtime.ejecutar(contenido.intro!);
+    expect(registro).toEqual([
+      'titulo:La Tortillería',
+      'enfoca:tortu:1.25',
+      'gesto:tortu:saludar',
+      '¡Buenos días! Las tortillas ya casi están.',
+      'enfoca:tommy:1.15',
+      'gesto:ajolo:saltar',
+      '¡Vamos, Tommy! ¡Huele delicioso!',
+      'gesto:jugador:asentir',
+      'espera:0.4',
+    ]);
   });
 
   test('abort() libera un paso que nunca termina', async () => {

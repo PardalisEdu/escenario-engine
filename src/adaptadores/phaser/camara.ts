@@ -7,16 +7,25 @@
  *   pan     escenas sin jugador: se arrastra con el dedo y sigue un poco por inercia.
  *
  * En todos los modos la cámara nunca sale de los bordes del mundo.
+ *
+ * Encima de cualquier modo, un paso "enfoca" lleva la cámara a un personaje o lugar con un paneo suave
+ * (y zoom, si se pide). La cámara se queda ahí hasta `soltarEnfoque()`, que la regresa al jugador.
  */
 import type * as Phaser from 'phaser';
 import type { Contenido, Punto } from '../../core/esquema';
 import type { EnfoqueDeCamara, Mundo } from '../../core/mundo';
 import type { Actor } from './actor';
+import { prefiereMenosMovimiento } from './interfaz';
 
 type ConfigDeCamara = Contenido['mundo']['camara'];
 
 /** Qué tan rápido se acomoda la cámara en modo rails (mayor = más rápido). */
 const RAPIDEZ_DE_RIELES = 4;
+
+const DURACION_DEL_ENFOQUE = 1100;
+const DURACION_DEL_REGRESO = 900;
+/** Curva que arranca y frena despacio: se siente como una cámara de cine. */
+const CURVA_DEL_ENFOQUE = 'Sine.easeInOut';
 
 export class Camara {
   private readonly camara: Phaser.Cameras.Scene2D.Camera;
@@ -25,6 +34,8 @@ export class Camara {
   private arrastrando = false;
   /** Dónde estaba la cámara cuando empezó el arrastre. */
   private scrollAlEmpezar = { x: 0, y: 0 };
+  /** true desde un "enfoca" hasta `soltarEnfoque()`: ningún modo mueve la cámara mientras tanto. */
+  private enfocada = false;
 
   constructor(
     escena: Phaser.Scene,
@@ -35,10 +46,11 @@ export class Camara {
     this.camara = escena.cameras.main;
     this.camara.setBounds(0, 0, mundo.ancho, mundo.alto);
 
-    if (config.modo === 'follow' && jugador) {
-      this.camara.startFollow(jugador.sprite, true, config.suavizado, config.seguirY);
-      this.camara.setDeadzone(config.zonaMuerta, escena.scale.height);
-    }
+    this.seguirAlJugador();
+  }
+
+  get estaEnfocada(): boolean {
+    return this.enfocada;
   }
 
   /** En modo pan, o si no hay jugador, la cámara se mueve arrastrando. */
@@ -81,9 +93,59 @@ export class Camara {
     this.arrastrando = false;
   }
 
+  // ── Enfoque (paso "enfoca") ──
+
+  /** Panea (y hace zoom) hasta `punto`. Termina al llegar o al cancelar; al cancelar se queda donde iba. */
+  enfocar(punto: Punto, zoom: number, cancelacion: AbortSignal): Promise<void> {
+    this.enfocada = true;
+    this.camara.stopFollow();
+    const duracion = prefiereMenosMovimiento() ? 0 : DURACION_DEL_ENFOQUE;
+
+    return new Promise((terminar) => {
+      const alTerminar = () => {
+        cancelacion.removeEventListener('abort', alCancelar);
+        terminar();
+      };
+      const alCancelar = () => {
+        this.camara.panEffect.reset();
+        this.camara.zoomEffect.reset();
+        terminar();
+      };
+      cancelacion.addEventListener('abort', alCancelar, { once: true });
+
+      this.camara.zoomTo(zoom, duracion, CURVA_DEL_ENFOQUE, true);
+      this.camara.pan(punto.x, punto.y, duracion, CURVA_DEL_ENFOQUE, true, (_camara, progreso) => {
+        if (progreso === 1) alTerminar();
+      });
+    });
+  }
+
+  /** Regresa al jugador (o solo quita el zoom, si no hay jugador) y vuelve al modo normal. */
+  soltarEnfoque(): void {
+    if (!this.enfocada) return;
+    this.enfocada = false;
+    const duracion = prefiereMenosMovimiento() ? 0 : DURACION_DEL_REGRESO;
+
+    if (this.config.modo !== 'rails') this.camara.zoomTo(1, duracion, CURVA_DEL_ENFOQUE, true);
+    if (!this.jugador || this.config.modo !== 'follow') return;
+
+    const centro = this.jugador.posicion;
+    this.camara.pan(centro.x, centro.y, duracion, CURVA_DEL_ENFOQUE, true, (_camara, progreso) => {
+      // Si mientras regresaba empezó otro enfoque, no se vuelve a seguir al jugador.
+      if (progreso === 1 && !this.enfocada) this.seguirAlJugador();
+    });
+  }
+
+  private seguirAlJugador(): void {
+    if (this.config.modo !== 'follow' || !this.jugador) return;
+    this.camara.startFollow(this.jugador.sprite, true, this.config.suavizado, this.config.seguirY);
+    this.camara.setDeadzone(this.config.zonaMuerta, this.camara.height);
+  }
+
   // ── Cada cuadro ──
 
   actualizar(segundos: number): void {
+    if (this.enfocada) return;
     if (this.config.modo === 'rails' && this.mundo.enfoquesDeCamara.length > 0) {
       this.acomodarEnRieles(segundos);
     } else if (this.seArrastra && !this.arrastrando) {

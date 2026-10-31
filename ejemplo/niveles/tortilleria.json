@@ -2,9 +2,22 @@
   "meta": { "id": "tortilleria", "titulo": "La Tortillería",
     "personajes": {
       "tommy": { "idioma": "en", "sprite": "spr_tommy" },
-      "tortu": { "idioma": "es", "sprite": "spr_tortu", "velocidad": 45 } } },
+      "tortu": { "idioma": "es", "sprite": "spr_tortu", "velocidad": 45 },
+      "ajolo": { "idioma": "es", "sprite": "spr_ajolo", "velocidad": 35 } } },
   "jugador": { "personaje": "tommy", "velocidadX": 240, "velocidadY": 110,
     "animaciones": { "idle": "tommy_idle", "caminar": "tommy_caminar", "hablar": "tommy_hablar" } },
+  "acompanante": { "personaje": "ajolo", "distancia": 110 },
+  "intro": [
+    { "titulo": "La Tortillería", "audio": "vo_titulo" },
+    { "enfoca": "tortu", "zoom": 1.25 },
+    { "gesto": "saludar", "quien": "tortu" },
+    { "dice": "tortu", "texto": "¡Buenos días! Las tortillas ya casi están.", "audio": "vo_tortu_intro" },
+    { "enfoca": "tommy", "zoom": 1.15 },
+    { "gesto": "saltar", "quien": "ajolo" },
+    { "dice": "ajolo", "texto": "¡Vamos, Tommy! ¡Huele delicioso!", "audio": "vo_ajolo_intro" },
+    { "gesto": "asentir" },
+    { "espera": 0.4 }
+  ],
   "mundo": { "logico": [1280, 720], "fondo": "#ffe6b8", "camara": { "modo": "follow" } },
   "estado": { "objetivos": ["tortillas"], "variables": ["charlas.*"],
               "lista": { "tortillas": "las tortillas" } },

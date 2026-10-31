@@ -35,7 +35,8 @@ bun run demo                  # http://localhost:3000 ; con ?debug se ven hotspo
 ```
 
 **Antes de dar un cambio por terminado:** `bun check` y `bun test` en verde, y el CLI valida el ejemplo.
-Si tocaste `src/adaptadores/phaser/`, abre la demo y recorre el nivel: tocar a Doña Tortu, minijuego
+Si tocaste `src/adaptadores/phaser/`, abre la demo y recorre el nivel: ver la intro (y saltarla con ⏭ o Escape;
+«Borrar partida» la vuelve a mostrar), caminar y ver que el acompañante te sigue, tocar a Doña Tortu, minijuego
 (tocar las 3 tortillas), volver, salir por la flecha. Las pruebas no cubren Phaser.
 
 Usa Bun para todo (`bun`, `bun test`, `bunx`), no Node, npm ni vitest. Ver `CLAUDE.md`.
@@ -89,8 +90,11 @@ Usa Bun para todo (`bun`, `bun test`, `bunx`), no Node, npm ni vitest. Ver `CLAU
 | --- | --- |
 | `escena.ts` | **Empieza aquí.** Conecta las piezas, recibe toques y teclado (PlayerController) e implementa `AccionesDelMundo`. |
 | `construir-mundo.ts` | Dibuja capas, props y actores; calcula huellas e `Interactuable`s. |
-| `actor.ts` | Personaje que camina (jugador o NPC). |
-| `camara.ts` | Modos `follow`, `rails` y `pan`. |
+| `actor.ts` | Personaje que camina (jugador, acompañante o NPC), con animación procedural y gestos. |
+| `pose.ts` | Poses procedurales (respirar, caminar, impulso, hablar, gestos): funciones puras que deforman el sprite. |
+| `acompanante.ts` | El acompañante sigue al jugador «con correa»; un paso `camina` lo guía. |
+| `camara.ts` | Modos `follow`, `rails` y `pan`, más el enfoque del paso `enfoca`. |
+| `cinematica.ts` / `titulo.ts` | Marco de cine de la intro (franjas, fundido, botón ⏭) y tarjeta del paso `titulo`. |
 | `conversacion.ts` | Globos, opciones de `elige` y comentarios, con su voz. |
 | `globo.ts` / `opciones.ts` / `voz.ts` | Globo de diálogo, menú de opciones, voz grabada o TTS. |
 | `avisos.ts` / `comentarios.ts` | Resaltado por cercanía; comentarios al entrar a zonas. |
@@ -112,9 +116,14 @@ Ejemplo jugable en `ejemplo/` (nivel de la Tortillería, host de prueba y servid
   la forma interna; los mensajes de error usan los nombres del JSON. La tabla completa está al inicio de `esquema.ts`.
 - **`Mundo`** sale de Tiled (`mapa-tiled.ts`) o del JSON v1 (`legacy.ts`). El resto del motor no sabe de dónde vino.
 - **`DialogueRuntime`** no conoce Phaser: llama a `AccionesDelMundo` (`mostrarLinea`, `elegirOpcion`,
-  `reproducirEfecto`, `caminar`, `jugarMinijuego`). Cada acción devuelve una promesa que termina al terminar
+  `reproducirEfecto`, `caminar`, `jugarMinijuego`, `enfocar`, `esperar`, `mostrarTitulo`, `hacerGesto`). Cada acción devuelve una promesa que termina al terminar
   la acción, y recibe una `AbortSignal`.
 - **Un diálogo a la vez.** `runtime.ocupado` bloquea otros diálogos y los toques al piso; no hay cola.
+- **La intro** (`contenido.intro`) es un diálogo más que corre al crear la escena si no hay partida guardada, dentro
+  del marco de `Cinematica`. Saltarla es `runtime.abort()`. Por eso la validación prohíbe `pon`, `juego` y `elige` en ella.
+- **La cámara enfocada** (`enfoca`) no se suelta en el paso: `EscenaMundo.update()` la suelta cuando el diálogo termina.
+- **Los actores se reescalan en cada cuadro** (pose procedural). No hagas tweens de `scale` sobre su sprite: anima
+  `actor.ajusteDeEscala` (así late un NPC en `avisos.ts`).
 - **`GameState`** guarda objetivos, variables y flags (`charlas.<id>`, que el motor marca solo al hablar).
 - **Coordenadas de mundo**: origen arriba a la izquierda. Personajes y props se ordenan por su «y de pie».
   Las demás capas de dibujo usan `PROFUNDIDAD` (`interfaz.ts`).
@@ -161,6 +170,10 @@ Ejemplo jugable en `ejemplo/` (nivel de la Tortillería, host de prueba y servid
 Agrega el nombre a `EFECTOS` (`core/validar-enlaces.ts`) y su implementación a `EFECTOS_DISPONIBLES`
 (`adaptadores/phaser/efectos.ts`). TypeScript te obliga a que ambos coincidan. Debe tener imagen **y** sonido.
 
+### Agregar un gesto del motor
+Agrega el nombre a `GESTOS` (`core/validar-enlaces.ts`), su duración a `DURACION_DE_GESTO` y su caso en `poseDeGesto`
+(`adaptadores/phaser/pose.ts`). TypeScript te obliga a cubrirlo. Documéntalo en la tabla de pasos de `docs/NIVELES.md`.
+
 ### Agregar una clase de decorado (Tiled)
 Agrégala a `CATALOGO_DE_DECORADO` (`core/mundo.ts`) con `pisablePorDefecto` y `encima`. Si tiene propiedades
 nuevas, súmalas a `PROPIEDADES_DE_DECORADO` (`core/mapa-tiled.ts`) y a `Prop`. Actualiza `docs/NIVELES.md`.
@@ -198,6 +211,8 @@ Una partida corrupta o de otro nivel se ignora con advertencia; nunca debe imped
 
 - **Sin búsqueda de caminos**: se camina en línea recta deslizándose por los bordes; ante una huella ancha el
   personaje se detiene (`avanzarHacia`, pregunta abierta 1 de §18).
+- **El acompañante tampoco rodea obstáculos**: se desliza por el borde y puede quedarse atrás (`acompanante.ts`).
+- **La intro solo se ve sin partida guardada.** Si el host guarda en `pagehide`, recargar a media intro la da por vista.
 - **La cámara `pan` no rebota** en los bordes (`config.rebote` aún no se usa).
 - **Formato v1 de diálogo `si`/`sino`/`pasos` no implementado**: la spec no define su forma.
 - **No hay migraciones por versión del contenido** (solo de la partida v1 → v2).

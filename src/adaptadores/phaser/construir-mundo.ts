@@ -4,7 +4,7 @@
  *   - Capas de fondo y de frente, con parallax.
  *   - Props del decorado (imagen o, para un puesto sin imagen, figuras dibujadas).
  *   - Huellas: la franja de abajo de cada prop no pisable, que bloquea el paso.
- *   - Actores: el jugador y los NPCs.
+ *   - Actores: el jugador, su acompañante y los NPCs.
  *   - La lista de cosas que se pueden tocar (interactuables).
  */
 import * as Phaser from 'phaser';
@@ -23,10 +23,14 @@ export interface Interactuable {
   entidad: Pick<Entidad, 'puntoDePie' | 'hotspot' | 'puntoInteraccion'>;
   /** La imagen que late cuando el jugador se acerca. */
   visual?: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image;
+  /** Si es un personaje, su actor (para latir sin pelear con su animación). */
+  actor?: Actor;
 }
 
 export interface ElementosDelMundo {
   jugador?: Actor;
+  /** El personaje que sigue al jugador, si el nivel tiene "acompanante". */
+  acompanante?: Actor;
   npcs: Map<string, Actor>;
   interactuables: Interactuable[];
   /** Zonas del piso que no se pueden pisar. */
@@ -37,6 +41,12 @@ export interface ElementosDelMundo {
 const PROPORCION_DE_HUELLA_POR_DEFECTO = 0.2;
 
 const VELOCIDAD_DE_NPC = { x: 200, y: 90 };
+
+/** El acompañante camina un poco más rápido que el jugador para poder alcanzarlo. */
+const VENTAJA_DE_VELOCIDAD_DEL_ACOMPANANTE = 1.15;
+
+/** Animaciones que se repiten sin fin; las demás son gestos y se reproducen una vez. */
+const ANIMACIONES_CONTINUAS = new Set(['idle', 'caminar', 'hablar']);
 
 /** Colores de lona con nombre. También se acepta un color hexadecimal ("#3fa34d"). */
 const COLORES_DE_LONA: Record<string, number> = {
@@ -58,6 +68,7 @@ export function construirMundo(escena: Phaser.Scene, nivel: Nivel, partida: Save
   for (const prop of nivel.mundo.props) dibujarProp(escena, prop, elementos);
   crearNpcs(escena, nivel, elementos);
   elementos.jugador = crearJugador(escena, nivel, partida);
+  if (elementos.jugador) elementos.acompanante = crearAcompanante(escena, nivel, elementos.jugador);
 
   const salida = nivel.mundo.salida;
   if (salida && nivel.contenido.salida) {
@@ -66,17 +77,25 @@ export function construirMundo(escena: Phaser.Scene, nivel: Nivel, partida: Save
   return elementos;
 }
 
-/** Cada clave de animación es un atlas; la animación usa todos sus cuadros en orden. */
+/**
+ * Cada clave de animación es un atlas; la animación usa todos sus cuadros en orden.
+ * "idle", "caminar" y "hablar" se repiten sin fin; un gesto propio ("bailar") se reproduce una vez.
+ */
 function crearAnimaciones(escena: Phaser.Scene, contenido: Contenido): void {
-  const claves = new Set<string>();
-  for (const clave of Object.values(contenido.jugador?.animaciones ?? {})) if (clave) claves.add(clave);
-  for (const personaje of Object.values(contenido.meta.personajes)) {
-    for (const clave of Object.values(personaje.animaciones ?? {})) if (clave) claves.add(clave);
-  }
+  const repeticionesPorClave = new Map<string, number>();
+  const agregar = (animaciones: Record<string, string | undefined> | undefined) => {
+    for (const [nombre, clave] of Object.entries(animaciones ?? {})) {
+      if (!clave) continue;
+      const repeticiones = ANIMACIONES_CONTINUAS.has(nombre) ? -1 : 0; // -1 = sin fin
+      repeticionesPorClave.set(clave, repeticiones);
+    }
+  };
+  agregar(contenido.jugador?.animaciones);
+  for (const personaje of Object.values(contenido.meta.personajes)) agregar(personaje.animaciones);
 
-  for (const clave of claves) {
+  for (const [clave, repeticiones] of repeticionesPorClave) {
     if (!escena.textures.exists(clave) || escena.anims.exists(clave)) continue;
-    escena.anims.create({ key: clave, frames: escena.anims.generateFrameNames(clave), frameRate: 10, repeat: -1 });
+    escena.anims.create({ key: clave, frames: escena.anims.generateFrameNames(clave), frameRate: 10, repeat: repeticiones });
   }
 }
 
@@ -169,22 +188,21 @@ function dibujarPuesto(escena: Phaser.Scene, prop: Prop, ancho: number, alto: nu
 
 /** Un NPC tiene sprite si existe un personaje con su mismo id en meta.personajes. */
 function crearNpcs(escena: Phaser.Scene, nivel: Nivel, elementos: ElementosDelMundo): void {
-  const rebotar = !prefiereMenosMovimiento();
+  const movimientoReducido = prefiereMenosMovimiento();
   for (const [id, entidad] of Object.entries(nivel.mundo.npcs)) {
     const personaje = nivel.contenido.meta.personajes[id];
-    let visual: Phaser.GameObjects.Sprite | undefined;
+    let actor: Actor | undefined;
 
     if (personaje) {
-      const actor = new Actor(escena, entidad.puntoDePie, personaje.sprite, {
+      actor = new Actor(escena, entidad.puntoDePie, personaje.sprite, {
         animaciones: personaje.animaciones,
         velocidad: VELOCIDAD_DE_NPC,
-        rebotarAlCaminar: rebotar,
+        movimientoReducido,
       });
       actor.mirarHacia(entidad.mira);
       elementos.npcs.set(id, actor);
-      visual = actor.sprite;
     }
-    elementos.interactuables.push({ tipo: 'npcs', id, entidad, visual });
+    elementos.interactuables.push({ tipo: 'npcs', id, entidad, visual: actor?.sprite, actor });
   }
 }
 
@@ -201,8 +219,33 @@ function crearJugador(escena: Phaser.Scene, nivel: Nivel, partida: SaveBlob | un
   const actor = new Actor(escena, posicion, personaje.sprite, {
     animaciones: jugador.animaciones,
     velocidad: { x: jugador.velocidadX, y: jugador.velocidadY },
-    rebotarAlCaminar: !prefiereMenosMovimiento(),
+    movimientoReducido: prefiereMenosMovimiento(),
   });
   actor.mirarHacia(guardado?.mira ?? inicio.mira);
+  return actor;
+}
+
+/** El acompañante aparece detrás del jugador (del lado contrario al que mira), ajustado al piso. */
+function crearAcompanante(escena: Phaser.Scene, nivel: Nivel, jugador: Actor): Actor | undefined {
+  const acompanante = nivel.contenido.acompanante;
+  if (!acompanante) return undefined;
+
+  const personaje = nivel.contenido.meta.personajes[acompanante.personaje]!; // la validación garantiza que existe
+  const datosDelJugador = nivel.contenido.jugador!; // sin jugador no se crea acompañante
+  const ladoDeAtras = jugador.mira === 'derecha' ? -1 : 1;
+  const posicion = ajustarAlPiso(
+    { x: jugador.posicion.x + ladoDeAtras * acompanante.distancia, y: jugador.posicion.y },
+    nivel.mundo.pisos,
+  );
+
+  const actor = new Actor(escena, posicion, personaje.sprite, {
+    animaciones: personaje.animaciones,
+    velocidad: {
+      x: datosDelJugador.velocidadX * VENTAJA_DE_VELOCIDAD_DEL_ACOMPANANTE,
+      y: datosDelJugador.velocidadY * VENTAJA_DE_VELOCIDAD_DEL_ACOMPANANTE,
+    },
+    movimientoReducido: prefiereMenosMovimiento(),
+  });
+  actor.mirarHacia(jugador.mira);
   return actor;
 }

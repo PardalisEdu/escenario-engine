@@ -7,7 +7,7 @@ const CARPETA_NIVELES = resolve(import.meta.dir, 'niveles');
 // Assets de relleno: SVG generado por clave, para probar sin el arte real de R2.
 const TAM: Record<string, [number, number, string]> = {
   cielo: [2400, 720, '#9fd8f5'], suelo: [2400, 720, 'none'], comal: [160, 120, '#5b5b5b'],
-  spr_tommy: [90, 160, '#3b82c4'], spr_tortu: [110, 170, '#3fa34d'],
+  spr_tommy: [90, 160, '#3b82c4'], spr_tortu: [110, 170, '#3fa34d'], spr_ajolo: [80, 110, '#f29bb8'],
 };
 function svg(clave: string, frames = 1) {
   const [w, h, color] = TAM[clave] ?? [90, 160, '#3b82c4'];

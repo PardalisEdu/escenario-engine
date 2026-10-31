@@ -80,6 +80,8 @@ Un `puesto` sin imagen se dibuja con figuras: lona del color de `lona` (`verde`,
 {
   "meta": { "id": "tortilleria", "titulo": "La Tortillería", "personajes": { ... } },
   "jugador": { ... },                     // opcional: sin jugador, la cámara se arrastra (modo pan)
+  "acompanante": { ... },                 // opcional: un personaje que sigue al jugador
+  "intro": [ ...pasos ],                  // opcional: escena animada al empezar
   "mundo": { "logico": [1280, 720], "fondo": "#ffe6b8", "camara": { ... }, "sonidos": { ... } },
   "estado": { "objetivos": [...], "variables": [...], "lista": { ... }, "dinero": 100 },
   "secuencias": { "nombre": [ ...pasos ] },
@@ -103,7 +105,13 @@ Un `puesto` sin imagen se dibuja con figuras: lona del color de `lona` (`verde`,
 - `idioma`: `es` o `en`. Si es distinto del idioma base del sitio, la línea puede traer `trad`: se muestra debajo
   del globo y se dice después del audio original.
 - `velocidad`: milisegundos por letra al escribir su texto (def. 30). Un personaje lento escribe despacio.
-- Un NPC del mapa con `id: "tortu"` usa el personaje `tortu` como sprite. Sin animación de `caminar`, se desliza con un rebote suave.
+- Un NPC del mapa con `id: "tortu"` usa el personaje `tortu` como sprite.
+- `animaciones`: `idle`, `caminar` y `hablar` las usa el motor solo. **Cualquier otro nombre** (`"bailar": "tortu_bailar"`)
+  es un gesto propio que se reproduce una vez con `{ "gesto": "bailar", "quien": "tortu" }`.
+- **Aunque no haya atlas, nadie se ve tieso**: el motor anima el sprite solo. En reposo respira; al caminar se inclina
+  hacia adelante y, sin atlas de `caminar`, rebota y se balancea con cada paso; se aplasta un poco al arrancar y al
+  frenar; se voltea con un giro corto; y, sin atlas de `hablar`, da saltitos mientras habla. Con «reducir movimiento»
+  activado en el sistema, todo eso se apaga (los gestos sí se hacen).
 
 ### `jugador`
 
@@ -113,6 +121,21 @@ Un `puesto` sin imagen se dibuja con figuras: lona del color de `lona` (`verde`,
 | `animaciones` | — | `{ idle, caminar, hablar }` |
 | `velocidadX` / `velocidadY` | 240 / 110 | píxeles por segundo; la vertical es más lenta |
 | `radioAviso` | 160 | distancia a la que se resalta algo interactivo |
+
+### `acompanante`
+
+```json
+"acompanante": { "personaje": "ajolo", "distancia": 110 }
+```
+
+Un personaje que sigue al jugador a todas partes, como con una correa: si el jugador se aleja más de `distancia`
+píxeles (def. 110), camina hasta alcanzarlo, del lado donde ya estaba; si está cerca, se queda quieto mirándolo.
+
+- `personaje` debe existir en `meta.personajes`, ser distinto del jugador y **no** ser un NPC del mapa.
+- Necesita un `jugador`. Aparece detrás de él al empezar.
+- Puede hablar (`"dice": "ajolo"`), caminar (`{ "camina": "fuente", "quien": "ajolo" }`; mientras dura, deja de
+  seguir) y hacer gestos. No se puede tocar.
+- No rodea obstáculos grandes: si un puesto queda en medio, se desliza por el borde y alcanza al jugador cuando este regresa.
 
 ### `mundo.camara`
 
@@ -163,6 +186,10 @@ Gana **la primera rama cuya condición se cumple**. Una rama sin `cuando` siempr
 | Caminar | `{ "camina": "frente_tortilleria", "quien": "tortu" }` | Camina hasta un `punto` del mapa, `{ "x": 900, "y": 470 }` o (v1) solo una x. Sin `quien`, camina el jugador. |
 | Secuencia | `{ "secuencia": "aun_no_item" }` | Ejecuta una secuencia nombrada (máx. 8 niveles; los ciclos son error). |
 | Condicional | `{ "cuando": "globo", "dice": [ ...pasos ] }` | Ejecuta sus pasos solo si se cumple la condición. |
+| Enfoque | `{ "enfoca": "tortu", "zoom": 1.3 }` | La cámara se desliza hasta un personaje (su id), un `punto` del mapa o `{ "x", "y" }`. `zoom` def. 1. Se queda ahí hasta que termina el diálogo y luego vuelve sola al jugador. |
+| Espera | `{ "espera": 1.5 }` | Pausa en segundos, para dar ritmo. |
+| Título | `{ "titulo": "La Tortillería", "audio": "vo_titulo" }` | Tarjeta de título a pantalla completa, con acorde, que se dice en voz alta. |
+| Gesto | `{ "gesto": "saltar", "quien": "tortu" }` | `saltar`, `saludar`, `asentir`, `sorpresa` o una animación propia del personaje. Sin `quien`, el jugador. |
 
 Los textos admiten `{faltan}` (objetivos pendientes, en español) y `{dinero}`.
 
@@ -177,6 +204,28 @@ Los textos admiten `{faltan}` (objetivos pendientes, en español) y `{dinero}`.
 | `"charlas.tortu"` | ya se habló con `tortu` |
 | `["a", "b"]` | se cumplen `a` **y** `b` |
 | `{ "alguno": ["a", "b"] }` | se cumple `a` **o** `b` |
+
+### `intro`: la escena de presentación
+
+Pasos que se ven como una pequeña película al **empezar el nivel sin partida guardada** (quien vuelve ya la vio).
+Entran dos franjas de cine, la imagen aparece desde negro y abajo a la derecha hay un botón ⏭ para saltarla
+(también con Escape). Tocar la pantalla adelanta los globos, como en cualquier diálogo.
+
+```json
+"intro": [
+  { "titulo": "La Tortillería", "audio": "vo_titulo" },
+  { "enfoca": "tortu", "zoom": 1.25 },
+  { "gesto": "saludar", "quien": "tortu" },
+  { "dice": "tortu", "texto": "¡Buenos días! Las tortillas ya casi están.", "audio": "vo_tortu_intro" },
+  { "enfoca": "tommy" },
+  { "gesto": "saltar", "quien": "ajolo" },
+  { "dice": "ajolo", "texto": "¡Vamos, Tommy!", "audio": "vo_ajolo_intro" }
+]
+```
+
+También puede ser el nombre de una secuencia (`"intro": "presentacion"`). Como se puede saltar en cualquier momento,
+**no admite `pon`, `juego` ni `elige`** (tampoco dentro de las secuencias que use): lo que cambie el estado va en el
+primer diálogo. Al terminar, la cámara regresa sola al jugador.
 
 ### `alVolver` (después de un minijuego)
 

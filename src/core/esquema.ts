@@ -14,6 +14,10 @@
  *   { "camina": "frente", "quien": "tortu" }      { tipo: 'camina', destino: 'frente', quien: 'tortu' }
  *   { "secuencia": "aun_no_item" }                { tipo: 'secuencia', nombre: 'aun_no_item' }
  *   { "cuando": "tengo x", "dice": [...] }        { tipo: 'condicional', condicion: 'tengo x', pasos: [...] }
+ *   { "enfoca": "tortu", "zoom": 1.3 }            { tipo: 'enfoca', objetivo: 'tortu', zoom: 1.3 }
+ *   { "espera": 1.5 }                             { tipo: 'espera', segundos: 1.5 }
+ *   { "titulo": "La Tortillería" }                { tipo: 'titulo', texto: 'La Tortillería' }
+ *   { "gesto": "saltar", "quien": "tortu" }       { tipo: 'gesto', nombre: 'saltar', quien: 'tortu' }
  *
  * Las ramas de un diálogo también se renombran: { "cuando", "dice": [...] } → { condicion, pasos }.
  * Los mensajes de error siempre usan los nombres del JSON, que son los que conoce quien escribe.
@@ -120,7 +124,52 @@ export interface PasoCondicional {
   pasos: Paso[];
 }
 
-export type Paso = Linea | PasoElige | PasoEfecto | PasoPon | PasoJuego | PasoCamina | PasoSecuencia | PasoCondicional;
+/**
+ * Mueve la cámara con suavidad hasta un personaje (su id) o un lugar (punto del mapa o { x, y }).
+ * La cámara se queda ahí hasta que termina el diálogo; luego vuelve sola al jugador.
+ */
+export interface PasoEnfoca {
+  tipo: 'enfoca';
+  objetivo: string | Punto;
+  /** 1 = sin acercamiento; 1.3 = un poco más cerca. */
+  zoom: number;
+}
+
+/** Una pausa, para dar ritmo a una escena. */
+export interface PasoEspera {
+  tipo: 'espera';
+  segundos: number;
+}
+
+/** Una tarjeta de título a pantalla completa que se dice en voz alta (para la intro). */
+export interface PasoTitulo {
+  tipo: 'titulo';
+  texto: string;
+  /** Clave de la voz grabada. Si no existe, se usa voz sintetizada. */
+  audio?: string;
+}
+
+/** Un gesto de un personaje: "saltar", "saludar", "asentir", "sorpresa" o una animación propia de su atlas. */
+export interface PasoGesto {
+  tipo: 'gesto';
+  nombre: string;
+  /** Quién hace el gesto. Si se omite, el jugador. */
+  quien?: string;
+}
+
+export type Paso =
+  | Linea
+  | PasoElige
+  | PasoEfecto
+  | PasoPon
+  | PasoJuego
+  | PasoCamina
+  | PasoSecuencia
+  | PasoCondicional
+  | PasoEnfoca
+  | PasoEspera
+  | PasoTitulo
+  | PasoGesto;
 
 /** Una rama del diálogo de un NPC: se ejecuta la primera cuya condición se cumple. */
 export interface Rama {
@@ -232,6 +281,22 @@ const esquemaCondicional = z
   .object({ cuando: esquemaCondicion, dice: listaDePasos })
   .transform((json): PasoCondicional => ({ tipo: 'condicional', condicion: json.cuando, pasos: json.dice }));
 
+const esquemaEnfoca = z
+  .object({ enfoca: z.union([z.string(), esquemaPunto]), zoom: z.number().positive().default(1) })
+  .transform((json): PasoEnfoca => ({ tipo: 'enfoca', objetivo: json.enfoca, zoom: json.zoom }));
+
+const esquemaEspera = z
+  .object({ espera: z.number().positive() })
+  .transform((json): PasoEspera => ({ tipo: 'espera', segundos: json.espera }));
+
+const esquemaTitulo = z
+  .object({ titulo: z.string().min(1), audio: z.string().optional() })
+  .transform((json): PasoTitulo => ({ tipo: 'titulo', texto: json.titulo, audio: json.audio }));
+
+const esquemaGesto = z
+  .object({ gesto: z.string().min(1), quien: z.string().optional() })
+  .transform((json): PasoGesto => ({ tipo: 'gesto', nombre: json.gesto, quien: json.quien }));
+
 /**
  * Cada paso se reconoce por su clave distintiva. El orden importa:
  * "cuando" va antes que "dice" porque un condicional también trae "dice" (su cuerpo).
@@ -244,6 +309,10 @@ const ESQUEMAS_DE_PASO: { clave: string; esquema: z.ZodType<Paso> }[] = [
   { clave: 'secuencia', esquema: esquemaSecuencia },
   { clave: 'efecto', esquema: esquemaEfecto },
   { clave: 'pon', esquema: esquemaPon },
+  { clave: 'enfoca', esquema: esquemaEnfoca },
+  { clave: 'espera', esquema: esquemaEspera },
+  { clave: 'titulo', esquema: esquemaTitulo },
+  { clave: 'gesto', esquema: esquemaGesto },
   { clave: 'dice', esquema: esquemaLinea },
 ];
 
@@ -283,11 +352,17 @@ const esquemaAlVolver = z
     siNo: json.siNo,
   }));
 
-const esquemaAnimaciones = z.object({
-  idle: z.string().optional(),
-  caminar: z.string().optional(),
-  hablar: z.string().optional(),
-});
+/**
+ * Claves de atlas por animación. "idle", "caminar" y "hablar" las usa el motor solo;
+ * cualquier otro nombre (por ejemplo "bailar") es un gesto que se pide con { "gesto": "bailar" }.
+ */
+const esquemaAnimaciones = z
+  .object({
+    idle: z.string().optional(),
+    caminar: z.string().optional(),
+    hablar: z.string().optional(),
+  })
+  .catchall(z.string());
 
 /** Un elemento de "layout" del formato v1 (solo se usa sin mapa de Tiled). */
 const esquemaElementoLayout = z.looseObject({ tipo: z.string() });
@@ -319,6 +394,13 @@ const esquemaJugador = z.object({
   velocidadY: z.number().positive().default(110),
   /** Distancia a la que se avisa de algo interactivo. */
   radioAviso: z.number().positive().default(160),
+});
+
+/** Un personaje que sigue al jugador a todas partes. */
+const esquemaAcompanante = z.object({
+  personaje: z.string(),
+  /** Píxeles que intenta mantener entre él y el jugador. */
+  distancia: z.number().positive().default(110),
 });
 
 const esquemaCamara = z.object({
@@ -375,6 +457,7 @@ export const esquemaContenido = z.object({
     personajes: z.record(z.string(), esquemaPersonaje),
   }),
   jugador: esquemaJugador.optional(),
+  acompanante: esquemaAcompanante.optional(),
   mundo: esquemaMundo.prefault({}),
   estado: esquemaEstado.prefault({}),
   secuencias: z.record(z.string(), z.array(esquemaPaso)).default({}),
@@ -382,6 +465,8 @@ export const esquemaContenido = z.object({
   interactivos: z.record(z.string(), esquemaInterlocutor).default({}),
   comentarios: z.record(z.string(), z.array(esquemaLinea)).default({}),
   salida: esquemaSalida.optional(),
+  /** Escena animada al empezar un nivel sin partida guardada. Se puede saltar. */
+  intro: pasosOSecuencia.optional(),
   // Formato v1, solo sin mapa de Tiled:
   layout: z.array(esquemaElementoLayout).optional(),
 });
@@ -389,6 +474,7 @@ export const esquemaContenido = z.object({
 /** El contenido de un nivel, ya validado y con los pasos convertidos. */
 export type Contenido = z.output<typeof esquemaContenido>;
 export type Personaje = z.output<typeof esquemaPersonaje>;
+export type Acompanante = z.output<typeof esquemaAcompanante>;
 export type ElementoLayout = z.output<typeof esquemaElementoLayout>;
 export type DeclaracionDeEstado = Contenido['estado'];
 

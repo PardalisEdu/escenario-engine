@@ -38,6 +38,8 @@ export function recorrerPasos(contenido: Contenido, visitante: Visitante): void 
   if (contenido.salida?.siBloqueada) {
     recorrerPasosOSecuencia(contenido.salida.siBloqueada, 'salida.siBloqueada', visitante);
   }
+
+  if (contenido.intro) recorrerPasosOSecuencia(contenido.intro, 'intro', visitante);
 }
 
 function recorrerLista(pasos: Paso[], ruta: string, visitante: Visitante): void {

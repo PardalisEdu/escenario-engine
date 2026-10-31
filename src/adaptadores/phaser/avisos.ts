@@ -12,11 +12,18 @@ import { cajaDeForma, distancia } from '../../core/geometria';
 import type { Interactuable } from './construir-mundo';
 import { PROFUNDIDAD, prefiereMenosMovimiento, type EscalaDeInterfaz } from './interfaz';
 
+/** Lo que late: el sprite o imagen del objeto o, si es un personaje, su ajuste de escala. */
+interface ConEscala {
+  scaleX: number;
+  scaleY: number;
+}
+
 interface Resaltado {
   interactuable: Interactuable;
   icono: Phaser.GameObjects.Text;
   latidoIcono?: Phaser.Tweens.Tween;
   latido?: Phaser.Tweens.Tween;
+  loQueLate?: ConEscala;
   escalaOriginal: { x: number; y: number };
 }
 
@@ -53,7 +60,10 @@ export class AvisosDeCercania {
     resaltado.latidoIcono?.remove();
     resaltado.icono.destroy();
     resaltado.latido?.remove();
-    resaltado.interactuable.visual?.setScale(resaltado.escalaOriginal.x, resaltado.escalaOriginal.y);
+    if (resaltado.loQueLate) {
+      resaltado.loQueLate.scaleX = resaltado.escalaOriginal.x;
+      resaltado.loQueLate.scaleY = resaltado.escalaOriginal.y;
+    }
     this.resaltado = undefined;
   }
 
@@ -89,15 +99,17 @@ export class AvisosDeCercania {
       .setDepth(PROFUNDIDAD.globos)
       .setScale(this.escala.botones);
 
-    const escalaOriginal = { x: visual?.scaleX ?? 1, y: visual?.scaleY ?? 1 };
+    // Un personaje se reescala solo en cada cuadro (actor.ts): se anima su ajuste, no el sprite.
+    const loQueLate: ConEscala | undefined = interactuable.actor?.ajusteDeEscala ?? visual;
+    const escalaOriginal = { x: loQueLate?.scaleX ?? 1, y: loQueLate?.scaleY ?? 1 };
     let latidoIcono: Phaser.Tweens.Tween | undefined;
     let latido: Phaser.Tweens.Tween | undefined;
 
     if (!prefiereMenosMovimiento()) {
       latidoIcono = this.escena.tweens.add({ targets: icono, y: icono.y - 8, duration: 350, yoyo: true, repeat: -1 });
-      if (visual) {
+      if (loQueLate) {
         latido = this.escena.tweens.add({
-          targets: visual,
+          targets: loQueLate,
           scaleX: escalaOriginal.x * 1.04,
           scaleY: escalaOriginal.y * 1.04,
           duration: 400,
@@ -107,6 +119,6 @@ export class AvisosDeCercania {
       }
     }
 
-    this.resaltado = { interactuable, icono, latidoIcono, latido, escalaOriginal };
+    this.resaltado = { interactuable, icono, latidoIcono, latido, loQueLate, escalaOriginal };
   }
 }
