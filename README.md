@@ -1,52 +1,144 @@
 # escenario-engine
 
-Motor narrativo declarativo sobre **Phaser 4** para el modo Aventura de Pardalis (spec 2.0): mapas en Tiled, contenido en JSON.
+Motor de juegos narrativos para el **modo Aventura de [Pardalis](https://gitlab.com/PardalisEdu)**: juegos educativos
+libres para niñas y niños de 1.º a 3.º de primaria que todavía no leen con soltura.
+
+Un nivel es un barrio que se recorre caminando: tocas a un personaje, conversan, juegas un minijuego, ganas un objeto
+y sigues. Cada nivel se describe con **datos**, no con código:
+
+- un **mapa de [Tiled](https://www.mapeditor.org)** (`.tmj`) dice **dónde** está cada cosa;
+- un **JSON de contenido** dice **qué pasa**: personajes, diálogos, objetivos y minijuegos.
+
+Corre sobre **Phaser 4** en el navegador. Está escrito en TypeScript para **Bun**.
+
+## Documentación
+
+| Si quieres… | Lee |
+| --- | --- |
+| Usar el motor en una página | este README, sección [Uso desde un host](#uso-desde-un-host) |
+| Dibujar un mapa o escribir un nivel | [`docs/NIVELES.md`](docs/NIVELES.md) |
+| Entender cómo está hecho por dentro, o modificarlo | [`AGENTS.md`](AGENTS.md) (para personas y agentes de IA) |
+| Escribir código para el proyecto | [`docs/ESTILO.md`](docs/ESTILO.md) |
+
+## Empezar
 
 ```bash
 bun install
-bun test                     # núcleo: validador, condiciones, geometría, diálogo
-bun check                    # tipos
-bun run demo                 # http://localhost:3000 (?debug para hotspots, piso y huellas)
-bun run validar ejemplo/niveles/tortilleria.tmj ejemplo/niveles/tortilleria.json --minijuegos Tortilleria
+bun run demo        # nivel de ejemplo en http://localhost:3000 (con ?debug se ven hotspots, piso y huellas)
+bun test            # pruebas
+bun check           # tipos
 ```
 
-## Estructura
+La demo usa el nivel de la Tortillería de [`ejemplo/niveles/`](ejemplo/niveles) con imágenes de relleno.
+Sin audio grabado, las voces salen con la síntesis de voz del navegador.
 
-Cada archivo empieza con un comentario que explica qué hace y a qué sección de la spec corresponde.
+## Uso desde un host
 
-**`src/core/`** — sin Phaser; corre en el navegador y en CI.
+```ts
+import { EscenarioEngine } from '@pardalis/escenario-engine';
+import { Tortilleria } from './minijuegos';
 
-| Archivo | Qué hace |
+const juego = new EscenarioEngine({
+  mapa: '/niveles/tortilleria.tmj',
+  config: await fetch('/niveles/tortilleria.json').then((r) => r.json()),
+  assetsRoot: 'https://assets.pardalis.mx/aventura/',
+  cdn: ['https://assets.pardalis.mx'],
+  minigames: { Tortilleria },
+  save: localStorage.getItem('pardalis:aventura:tortilleria:save'),
+  i18n: { base: 'es' },
+});
+
+const guardar = () =>
+  localStorage.setItem('pardalis:aventura:tortilleria:save', JSON.stringify(juego.serialize()));
+
+juego.on('objetivoCompleto', guardar);
+juego.on('escenaTerminada', (destino) => { guardar(); /* el host decide a dónde ir */ });
+juego.on('error', (error) => console.error(error));
+juego.mount('#contenedor');
+
+// Al salir de la página:
+juego.destroy();
+```
+
+**El motor nunca navega ni guarda nada por su cuenta**: dibuja y avisa con eventos, y el host decide qué guardar y a dónde ir.
+Phaser necesita `window`, así que el motor se monta solo en el cliente (en Astro, dentro de un `<script>` o con `client:only`).
+Un host de ejemplo completo está en [`ejemplo/demo.ts`](ejemplo/demo.ts).
+
+### Opciones
+
+| Opción | Tipo | Qué es |
+| --- | --- | --- |
+| `mapa` | `string \| TiledMap` | URL del `.tmj` o el mapa ya cargado. Sin mapa, se usa el formato v1. |
+| `config` | `object \| string` | Contenido JSON del nivel. |
+| `assetsRoot` | `string` | Carpeta base de imágenes y sonidos. |
+| `cdn` | `string[]` | Orígenes HTTPS permitidos para assets externos. |
+| `minigames` | `Record<string, MiniGameFactory>` | Fábricas de minijuegos, por la clave del paso `juego`. |
+| `save` | `string \| SaveBlob` | Partida guardada a restaurar (corrupta o de otro nivel → se ignora). |
+| `i18n` | `{ base: 'es' \| 'en' }` | Idioma de la interfaz. |
+| `proyeccion` | `boolean \| { escalaUI, escalaGlobos, textoMinimo }` | Modo salón de clases: todo más grande. |
+| `seed` | `number` | Hace reproducibles los comentarios al azar (pruebas E2E). |
+| `debug` | `boolean` | Dibuja hotspots, piso y huellas. |
+
+### Eventos y métodos
+
+| Evento | Cuándo |
 | --- | --- |
-| `esquema.ts` | Esquema Zod del JSON y tipos internos. Convierte cada paso a `{ tipo: ... }`. |
-| `validar.ts` | Orquesta las fases de validación (§12). |
-| `validar-enlaces.ts` / `validar-cruce.ts` | Fase 3 (lo que se nombra existe) y fase 4 (mapa ↔ contenido). |
-| `recorrer-pasos.ts` | Recorre todos los pasos anidados; lo usan las fases 3 y 4. |
-| `mundo.ts` | Modelo del mundo (el DÓNDE) y catálogo de decorado. |
-| `mapa-tiled.ts` | Lee un `.tmj` de Tiled y arma el mundo. |
-| `legacy.ts` | Formato v1: normaliza formas viejas y arma el mundo sin mapa. |
-| `dialogo.ts` | `DialogueRuntime`: ejecuta los pasos uno por uno. |
-| `estado.ts` / `condiciones.ts` / `partida.ts` | Estado del juego, condiciones y partida guardada. |
-| `geometria.ts` / `assets.ts` | Piso y movimiento; rutas seguras de assets. |
+| `listo` | El nivel terminó de cargar. |
+| `objetivoCompleto (objetivo)` | Se cumplió un objetivo: buen momento para guardar. |
+| `palabra ({ en, es })` | Se mostró una tarjeta de vocabulario (para el álbum). |
+| `escenaTerminada (destino)` | La niña o el niño salió del nivel. |
+| `error (error)` | El nivel no pudo arrancar; el mensaje lista cada problema. |
 
-**`src/adaptadores/phaser/`** — lo que se ve y se oye.
-
-| Archivo | Qué hace |
+| Método | Qué hace |
 | --- | --- |
-| `escena.ts` | Conecta todas las piezas; recibe toques y teclado. Empieza a leer aquí. |
-| `construir-mundo.ts` | Dibuja capas, props y actores. |
-| `actor.ts` | Un personaje que camina. |
-| `camara.ts`, `avisos.ts`, `comentarios.ts` | Cámara, resaltado por cercanía, comentarios por zona. |
-| `conversacion.ts`, `globo.ts`, `opciones.ts`, `voz.ts` | Diálogo en pantalla y voz (grabada o TTS). |
-| `minijuego.ts`, `efectos.ts` | Montaje de minijuegos; partículas y sonidos. |
-| `assets.ts`, `barra-de-carga.ts`, `flecha-de-salida.ts`, `depuracion.ts`, `interfaz.ts` | Carga, UI menor y constantes compartidas. |
+| `mount(selectorOElemento)` | Valida y arranca el juego. |
+| `serialize()` | Devuelve la partida (`SaveBlob`) para guardarla. |
+| `setProyeccion(valor)` | Activa o quita el modo salón sin reiniciar. |
+| `pause()` / `resume()` | Congela y reanuda el juego y el audio. |
+| `abort()` | Termina el diálogo en curso (p. ej. al abrir un menú). |
+| `destroy()` | Libera todo (texturas, audio, listeners). |
 
-`src/engine.ts` es la API pública (`EscenarioEngine`) y `src/cli.ts` el validador de línea de comandos.
+### Minijuegos
 
-## Convenciones que el spec no fija
+Un minijuego es una función que recibe una escena de Phaser vacía y devuelve una promesa con el resultado:
 
-- Assets por clave contra `assetsRoot`: sin extensión se agrega `.webp` (imágenes), `.mp3` (audio). Una animación es un atlas `<clave>.webp` + `<clave>.json`.
-- Sonidos globales en `mundo.sonidos: { tap, cerca, musica }` (sin ellos suena un tono sintetizado).
-- Opción de `elige`: `{ texto?, imagen?, audio?, cuando?, secuencia: pasos | "nombre" }`. Condicional dentro de una secuencia: `{ cuando, dice: [pasos] }`.
-- Capas de `capas/` con parallax > 1 se dibujan al frente de personajes.
-- Evento extra `palabra` ({ en, es }) para que el host llene el álbum; `debug: true` activa el overlay.
+```ts
+import type { MiniGameFactory } from '@pardalis/escenario-engine';
+
+export const Tortilleria: MiniGameFactory = async ({ scene, assets, state, audio }, config) => {
+  // ...dibujar en `scene`, cargar con `assets.cargar([...])`, hablar con `audio.decir(...)`
+  return { exito: true, otorgar: { tortillas: true } };
+};
+```
+
+Sin vidas ni mensajes de error: `exito: false` simplemente lleva al diálogo amable `siNo` del NPC.
+
+## Validar niveles en CI
+
+```bash
+bun run validar ruta/nivel.tmj ruta/nivel.json --minijuegos Tortilleria,Fruteria
+```
+
+Sale con código 1 si hay errores, con un mensaje por problema que apunta a la ruta del JSON o al objeto del mapa.
+Para validar desde código sin navegador: `import { validar } from '@pardalis/escenario-engine/validar'`.
+
+## Cómo funciona, en una imagen
+
+```
+mapa .tmj + contenido .json
+        │
+        ▼
+validar ── parse → schema → enlaces → cruce mapa↔contenido     (src/core, sin Phaser)
+        │
+        ▼
+EscenaMundo (Phaser 4) ── carga assets, dibuja, mueve al jugador, escucha toques
+        │
+        ▼
+DialogueRuntime ── ejecuta los pasos del diálogo uno por uno
+```
+
+Los detalles, las reglas que no se deben romper y cómo hacer los cambios más comunes están en [`AGENTS.md`](AGENTS.md).
+
+## Licencia
+
+Ver [`LICENSE`](LICENSE).

@@ -1,3 +1,12 @@
+# Contexto del proyecto
+
+El contexto completo (arquitectura, invariantes, recetas y trampas) está en AGENTS.md, que se importa aquí.
+Antes de escribir código, lee también docs/ESTILO.md.
+
+@AGENTS.md
+
+# Bun
+
 Default to using Bun instead of Node.js.
 
 - Use `bun <file>` instead of `node <file>` or `ts-node <file>`
