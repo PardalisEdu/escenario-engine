@@ -21,7 +21,8 @@ Un nivel son **dos archivos de datos** unidos por `id`, y no lleva código de Ph
 - **Contenido JSON**: el **QUÉ PASA** (personajes, diálogos, estado, minijuegos, salida).
 
 El host (el sitio en Astro) crea un `EscenarioEngine`, registra fábricas de minijuegos y escucha eventos.
-El motor dibuja con **Phaser 4**, corre sobre **Bun** y valida con **Zod 4**.
+El motor dibuja con **Phaser 4**, corre sobre **Bun** y valida con **Zod 4**. Licencia: **MPL-2.0**
+(la spec menciona GPL-3.0, pero el proyecto usa MPL-2.0; manda `LICENSE`).
 
 ## 2. Comandos y verificación
 
@@ -202,6 +203,5 @@ Una partida corrupta o de otro nivel se ignora con advertencia; nunca debe imped
 - **No hay migraciones por versión del contenido** (solo de la partida v1 → v2).
 - **Convenciones propias** (la spec no las fija): extensiones por defecto de assets, `mundo.sonidos`, forma de las
   opciones de `elige`, capas con parallax > 1 al frente, evento `palabra`, opción `debug`. Ver `docs/NIVELES.md`.
-- **Licencia inconsistente**: `LICENSE` es MPL-2.0 pero `package.json` dice GPL-3.0. Pendiente de decidir; no la cambies sin confirmarlo.
 - Preguntas abiertas de la spec (§18): Tiled siempre vs. mapa embebido, caché offline de R2, `rails` a mitad de diálogo,
   dónde vive el vocabulario, varias salidas por nivel, escala por profundidad, activación del modo proyección.

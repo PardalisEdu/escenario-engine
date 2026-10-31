@@ -141,4 +141,4 @@ Los detalles, las reglas que no se deben romper y cómo hacer los cambios más c
 
 ## Licencia
 
-Ver [`LICENSE`](LICENSE).
+[Mozilla Public License 2.0](LICENSE) (MPL-2.0).

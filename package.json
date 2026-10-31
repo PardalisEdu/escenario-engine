@@ -26,5 +26,5 @@
   "bin": {
     "escenario-engine": "./src/cli.ts"
   },
-  "license": "GPL-3.0"
+  "license": "MPL-2.0"
 }
