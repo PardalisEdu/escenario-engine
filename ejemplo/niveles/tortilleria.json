@@ -1,0 +1,37 @@
+{
+  "meta": { "id": "tortilleria", "titulo": "La Tortillería",
+    "personajes": {
+      "tommy": { "idioma": "en", "sprite": "spr_tommy" },
+      "tortu": { "idioma": "es", "sprite": "spr_tortu", "velocidad": 45 } } },
+  "jugador": { "personaje": "tommy", "velocidadX": 240, "velocidadY": 110,
+    "animaciones": { "idle": "tommy_idle", "caminar": "tommy_caminar", "hablar": "tommy_hablar" } },
+  "mundo": { "logico": [1280, 720], "fondo": "#ffe6b8", "camara": { "modo": "follow" } },
+  "estado": { "objetivos": ["tortillas"], "variables": ["charlas.*"],
+              "lista": { "tortillas": "las tortillas" } },
+  "secuencias": {
+    "aun_no_item": [ { "dice": "tortu", "texto": "¡Otro día lo intentamos!", "audio": "vo_tortu_otro_dia" } ],
+    "bloquea_salida": [ { "dice": "tortu", "texto": "¡Espérate! Te faltan {faltan}.", "audio": "vo_tortu_faltan" } ]
+  },
+  "npcs": {
+    "tortu": {
+      "dialogo": [
+        { "cuando": "tengo tortillas",
+          "dice": [ { "dice": "tortu", "texto": "¡Que te aprovechen!", "audio": "vo_tortu_provecho" } ] },
+        { "dice": [
+            { "camina": "frente_tortilleria" },
+            { "dice": "tortu", "texto": "¡Cuidado, el comal está caliente!",
+              "en": "hot", "es": "caliente", "audio": "vo_tortu_caliente" },
+            { "juego": "Tortilleria", "config": { "palabras": ["hot", "corn"] } } ] }
+      ],
+      "alVolver": { "conItem": "tortillas", "siNo": "aun_no_item",
+        "siLogrado": [ { "efecto": "magia" },
+          { "dice": "tommy", "texto": "Thank you!", "trad": "¡Gracias!", "audio": "vo_tommy_gracias" } ] }
+    }
+  },
+  "comentarios": {
+    "general": [ { "dice": "tommy", "texto": "Wow!", "trad": "¡Qué colorido!", "audio": "vo_wow" } ]
+  },
+  "salida": { "destino": "Selector", "requiere": "objetivosCompletos",
+              "siBloqueada": "bloquea_salida",
+              "flecha": { "visibleCuando": "objetivosCompletos" } }
+}

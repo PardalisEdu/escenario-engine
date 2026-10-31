@@ -1,0 +1,39 @@
+{
+  "type": "map", "version": "1.10", "orientation": "orthogonal", "renderorder": "right-down",
+  "width": 75, "height": 23, "tilewidth": 32, "tileheight": 32, "infinite": false,
+  "properties": [{ "name": "ancho", "type": "int", "value": 2400 }, { "name": "alto", "type": "int", "value": 720 }],
+  "tilesets": [{
+    "firstgid": 1, "name": "props", "columns": 0, "tilecount": 1, "tilewidth": 160, "tileheight": 120,
+    "tiles": [{ "id": 0, "image": "../arte/comal.png", "imagewidth": 160, "imageheight": 120,
+                "properties": [{ "name": "asset", "type": "string", "value": "comal" }] }]
+  }],
+  "layers": [
+    { "type": "group", "name": "capas", "layers": [
+      { "type": "imagelayer", "name": "cielo", "image": "../arte/cielo.png", "x": 0, "y": 0,
+        "properties": [{ "name": "asset", "type": "string", "value": "cielo" }, { "name": "parallax", "type": "float", "value": 0.2 }] },
+      { "type": "imagelayer", "name": "suelo", "image": "../arte/suelo.png", "x": 0, "y": 0,
+        "properties": [{ "name": "asset", "type": "string", "value": "suelo" }] }
+    ] },
+    { "type": "objectgroup", "name": "decorado", "objects": [
+      { "id": 20, "name": "comal", "type": "comal", "gid": 1, "x": 960, "y": 440, "width": 160, "height": 120 }
+    ] },
+    { "type": "objectgroup", "name": "npcs", "objects": [
+      { "id": 12, "name": "Doña Tortu", "type": "npc", "ellipse": true,
+        "x": 840, "y": 300, "width": 220, "height": 120,
+        "properties": [
+          { "name": "id", "type": "string", "value": "tortu" },
+          { "name": "mira", "type": "string", "value": "izquierda" },
+          { "name": "puntoInteraccion", "type": "object", "value": 31 } ] }
+    ] },
+    { "type": "objectgroup", "name": "interaccion", "objects": [
+      { "id": 2, "name": "inicio", "type": "inicioJugador", "point": true, "x": 200, "y": 470 },
+      { "id": 31, "name": "frente_tortilleria", "type": "punto", "point": true, "x": 760, "y": 470 },
+      { "id": 40, "name": "salida", "type": "salida", "x": 40, "y": 380, "width": 120, "height": 150 },
+      { "id": 44, "name": "zona_colores", "type": "zonaComentario", "x": 400, "y": 420, "width": 200, "height": 110 }
+    ] },
+    { "type": "objectgroup", "name": "piso", "objects": [
+      { "id": 5, "name": "piso", "type": "piso", "x": 0, "y": 420,
+        "polygon": [{ "x": 0, "y": 0 }, { "x": 2400, "y": 0 }, { "x": 2400, "y": 110 }, { "x": 0, "y": 110 }] }
+    ] }
+  ]
+}
