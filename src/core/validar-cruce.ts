@@ -26,12 +26,12 @@ export function revisarCruce(contenido: Contenido, mundo: Mundo, hayMapa: boolea
 
 function revisarNpcs(contenido: Contenido, mundo: Mundo, hayMapa: boolean, diagnostico: Diagnostico): void {
   for (const [id, npc] of Object.entries(mundo.npcs)) {
-    if (!contenido.npcs[id]) {
+    if (!Object.hasOwn(contenido.npcs, id)) {
       diagnostico.error(`mapa: ${npc.descripcion} (npc) tiene id "${id}", que no existe en npcs`);
     }
   }
   for (const id of Object.keys(contenido.npcs)) {
-    if (mundo.npcs[id]) continue;
+    if (Object.hasOwn(mundo.npcs, id)) continue;
     if (hayMapa) diagnostico.error(`npcs.${id} no tiene objeto de clase npc en la capa "npcs"`);
     else diagnostico.error(`npcs.${id} no tiene coordenadas x, y`);
   }
@@ -42,7 +42,7 @@ function revisarInteractivos(contenido: Contenido, mundo: Mundo, hayMapa: boolea
   for (const prop of mundo.props) {
     if (prop.id === undefined) continue;
     idsDePropsInteractivos.add(prop.id);
-    if (!contenido.interactivos[prop.id]) {
+    if (!Object.hasOwn(contenido.interactivos, prop.id)) {
       diagnostico.error(`mapa: ${prop.descripcion} (${prop.clase}) tiene id "${prop.id}", que no existe en interactivos`);
     }
   }
@@ -68,7 +68,7 @@ function revisarPisoEInicio(mundo: Mundo, diagnostico: Diagnostico): void {
 
 function revisarZonasDeComentario(contenido: Contenido, mundo: Mundo, diagnostico: Diagnostico): void {
   for (const zona of mundo.zonasDeComentario) {
-    if (!contenido.comentarios[zona.grupo]) {
+    if (!Object.hasOwn(contenido.comentarios, zona.grupo)) {
       diagnostico.error(`${zona.descripcion}: grupo "${zona.grupo}" no existe en comentarios`);
     }
   }
@@ -99,7 +99,7 @@ function revisarCaminatas(contenido: Contenido, mundo: Mundo, diagnostico: Diagn
       if (paso.quien !== undefined && !quienesPuedenCaminar.has(paso.quien)) {
         diagnostico.error(`camina en ${ruta}: "quien": "${paso.quien}" no es el jugador ni un NPC del mapa`);
       }
-      if (typeof paso.destino === 'string' && !mundo.puntos[paso.destino]) {
+      if (typeof paso.destino === 'string' && !Object.hasOwn(mundo.puntos, paso.destino)) {
         diagnostico.error(`camina "${paso.destino}" en ${ruta}: no hay punto con ese nombre`);
       }
     },

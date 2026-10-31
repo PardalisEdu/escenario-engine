@@ -143,7 +143,7 @@ function agregarElementosDeLayout(
 ): void {
   elementos.forEach((elemento, i) => {
     const descripcion = `${ruta}[${i}]`;
-    const catalogo = CATALOGO_DE_DECORADO[elemento.tipo];
+    const catalogo = Object.hasOwn(CATALOGO_DE_DECORADO, elemento.tipo) ? CATALOGO_DE_DECORADO[elemento.tipo] : undefined;
     if (!catalogo) {
       diagnostico.error(`${descripcion}: tipo desconocido "${elemento.tipo}"`);
       return;

@@ -136,6 +136,9 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     this.runtime = new DialogueRuntime(this.contenido, this.datos.estado, this);
     this.datos.estado.alCambiar = () => this.actualizarFlecha();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.datos.estado.alCambiar = undefined;
+      this.avisos.quitar();
+      this.conversacion.cancelarComentario();
       this.conversacion.callar();
       this.runtime?.abort();
     });
@@ -221,10 +224,13 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     const teclado = this.input.keyboard;
     if (teclado) {
       const K = Phaser.Input.Keyboard.KeyCodes;
-      this.teclas = teclado.addKeys({
-        arriba: K.UP, abajo: K.DOWN, izquierda: K.LEFT, derecha: K.RIGHT,
-        w: K.W, a: K.A, s: K.S, d: K.D,
-      }) as TeclasDeMovimiento;
+      this.teclas = teclado.addKeys(
+        {
+          arriba: K.UP, abajo: K.DOWN, izquierda: K.LEFT, derecha: K.RIGHT,
+          w: K.W, a: K.A, s: K.S, d: K.D,
+        },
+        false, // enableCapture=false para no bloquear inputs HTML que monte el host
+      ) as TeclasDeMovimiento;
       teclado.on('keydown', (evento: KeyboardEvent) => this.alPresionarTecla(evento));
     }
 
@@ -253,6 +259,10 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
   }
 
   private alPresionarTecla(evento: KeyboardEvent): void {
+    const objetivo = evento.target as HTMLElement | null;
+    if (objetivo && (objetivo.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(objetivo.tagName))) return;
+    if (evento.ctrlKey || evento.altKey || evento.metaKey) return;
+
     const esEnterOEspacio = evento.key === 'Enter' || evento.key === ' ';
     if (esEnterOEspacio) {
       if (this.runtime?.ocupado) this.conversacion.avanzar();
@@ -394,13 +404,13 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
   }
 
   /** El efecto aparece sobre el jugador; si no hay jugador, en el centro de la pantalla. */
-  reproducirEfecto(nombre: string): Promise<void> {
+  reproducirEfecto(nombre: string, cancelacion: AbortSignal): Promise<void> {
     const actor = this.elementos.jugador ?? [...this.elementos.npcs.values()][0];
     const vista = this.cameras.main.worldView;
     const posicion = actor
       ? { x: actor.posicion.x, y: actor.sprite.y - actor.sprite.displayHeight / 2 }
       : { x: vista.centerX, y: vista.centerY };
-    return reproducirEfecto(this, nombre, posicion);
+    return reproducirEfecto(this, nombre, posicion, cancelacion);
   }
 
   async caminar(quien: string | undefined, destino: DestinoCamina, cancelacion: AbortSignal): Promise<void> {
@@ -412,8 +422,13 @@ export class EscenaMundo extends Phaser.Scene implements AccionesDelMundo {
     else if (typeof destino === 'string') objetivo = this.mundo.puntos[destino]!; // la validación garantiza que existe
     else objetivo = destino;
 
-    cancelacion.addEventListener('abort', () => actor.detener(), { once: true });
-    await actor.caminarA(ajustarAlPiso(objetivo, this.mundo.pisos));
+    const alCancelar = () => actor.detener();
+    cancelacion.addEventListener('abort', alCancelar, { once: true });
+    try {
+      await actor.caminarA(ajustarAlPiso(objetivo, this.mundo.pisos));
+    } finally {
+      cancelacion.removeEventListener('abort', alCancelar);
+    }
   }
 
   jugarMinijuego(clave: string, config: unknown, cancelacion: AbortSignal): Promise<MiniGameResult> {

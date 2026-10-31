@@ -1,5 +1,8 @@
 // bun ejemplo/servidor.ts → http://localhost:3000 (añade ?debug para ver hotspots, piso y huellas)
+import { resolve } from 'node:path';
 import index from './index.html';
+
+const CARPETA_NIVELES = resolve(import.meta.dir, 'niveles');
 
 // Assets de relleno: SVG generado por clave, para probar sin el arte real de R2.
 const TAM: Record<string, [number, number, string]> = {
@@ -21,7 +24,12 @@ function svg(clave: string, frames = 1) {
 Bun.serve({
   routes: {
     '/': index,
-    '/niveles/*': (req) => new Response(Bun.file(`${import.meta.dir}${new URL(req.url).pathname}`)),
+    '/niveles/*': (req) => {
+      const relativo = decodeURIComponent(new URL(req.url).pathname.slice('/niveles/'.length));
+      const destino = resolve(CARPETA_NIVELES, relativo);
+      if (!destino.startsWith(`${CARPETA_NIVELES}/`)) return new Response('prohibido', { status: 403 });
+      return new Response(Bun.file(destino));
+    },
     '/assets/*': (req) => {
       const nombre = new URL(req.url).pathname.slice('/assets/'.length);
       const clave = nombre.replace(/\.[a-z0-9]+$/i, '');

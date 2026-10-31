@@ -12,11 +12,15 @@ import { tocarTono } from './voz';
 const TEXTURA_DE_CHISPA = 'escenario:chispa';
 const DURACION_EN_MILISEGUNDOS = 1000;
 
-type Efecto = (escena: Phaser.Scene, posicion: Punto) => Phaser.GameObjects.Particles.ParticleEmitter;
+type Efecto = (
+  escena: Phaser.Scene,
+  posicion: Punto,
+  temporizadores: Phaser.Time.TimerEvent[],
+) => Phaser.GameObjects.Particles.ParticleEmitter;
 
 const EFECTOS_DISPONIBLES: Record<NombreDeEfecto, Efecto> = {
   /** Una explosión de chispas de colores y tres notas que suben. */
-  magia(escena, posicion) {
+  magia(escena, posicion, temporizadores) {
     const chispas = escena.add.particles(posicion.x, posicion.y, TEXTURA_DE_CHISPA, {
       speed: { min: 80, max: 260 },
       lifespan: 900,
@@ -28,7 +32,9 @@ const EFECTOS_DISPONIBLES: Record<NombreDeEfecto, Efecto> = {
     chispas.explode(40);
 
     const notas = [660, 880, 1320];
-    notas.forEach((frecuencia, i) => escena.time.delayedCall(i * 110, () => tocarTono(escena, frecuencia)));
+    notas.forEach((frecuencia, i) => {
+      temporizadores.push(escena.time.delayedCall(i * 110, () => tocarTono(escena, frecuencia)));
+    });
     return chispas;
   },
 
@@ -60,12 +66,31 @@ export function crearTexturaDeChispa(escena: Phaser.Scene): void {
   dibujo.destroy();
 }
 
-/** Reproduce un efecto en `posicion` y termina cuando se acaba la animación. */
-export async function reproducirEfecto(escena: Phaser.Scene, nombre: string, posicion: Punto): Promise<void> {
+/** Reproduce un efecto en `posicion` y termina cuando se acaba la animación (o al cancelar). */
+export async function reproducirEfecto(
+  escena: Phaser.Scene,
+  nombre: string,
+  posicion: Punto,
+  cancelacion?: AbortSignal,
+): Promise<void> {
+  if (cancelacion?.aborted) return;
   const efecto = EFECTOS_DISPONIBLES[nombre as NombreDeEfecto];
   if (!efecto) return; // no pasa: la validación ya revisó que exista
 
-  const particulas = efecto(escena, posicion);
-  await new Promise((terminar) => escena.time.delayedCall(DURACION_EN_MILISEGUNDOS, terminar));
+  const temporizadores: Phaser.Time.TimerEvent[] = [];
+  const particulas = efecto(escena, posicion, temporizadores);
+
+  await new Promise<void>((terminar) => {
+    const espera = escena.time.delayedCall(DURACION_EN_MILISEGUNDOS, () => {
+      cancelacion?.removeEventListener('abort', alCancelar);
+      terminar();
+    });
+    const alCancelar = () => {
+      espera.remove();
+      for (const t of temporizadores) t.remove();
+      terminar();
+    };
+    cancelacion?.addEventListener('abort', alCancelar, { once: true });
+  });
   particulas.destroy();
 }

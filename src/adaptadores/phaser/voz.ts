@@ -12,6 +12,7 @@ const CODIGO_DE_IDIOMA: Record<Idioma, string> = { es: 'es-MX', en: 'en-US' };
 
 export class Voz {
   private sonidoActual?: Phaser.Sound.BaseSound;
+  private enunciadoActual?: SpeechSynthesisUtterance;
 
   constructor(private readonly escena: Phaser.Scene) {}
 
@@ -33,7 +34,10 @@ export class Voz {
   callar(): void {
     this.sonidoActual?.destroy();
     this.sonidoActual = undefined;
-    globalThis.speechSynthesis?.cancel();
+    if (this.enunciadoActual) {
+      this.enunciadoActual = undefined;
+      globalThis.speechSynthesis?.cancel();
+    }
   }
 
   /** Una señal corta (toque, cercanía). Si el nivel no trae su propio sonido, se sintetiza un tono. */
@@ -49,13 +53,21 @@ export class Voz {
     const sonido = this.escena.sound.add(clave);
     this.sonidoActual = sonido;
     return new Promise((terminar) => {
-      const alTerminar = () => {
-        sonido.destroy();
+      const limpiarYTerminar = () => {
+        if (this.sonidoActual === sonido) this.sonidoActual = undefined;
+        cancelacion?.removeEventListener('abort', alAbortar);
         terminar();
       };
-      sonido.once('complete', alTerminar);
-      sonido.once('destroy', terminar); // callar() destruye el sonido
-      cancelacion?.addEventListener('abort', alTerminar, { once: true });
+      const alAbortar = () => {
+        sonido.destroy();
+        limpiarYTerminar();
+      };
+      sonido.once('complete', () => {
+        sonido.destroy();
+        limpiarYTerminar();
+      });
+      sonido.once('destroy', limpiarYTerminar); // callar() destruye el sonido
+      cancelacion?.addEventListener('abort', alAbortar, { once: true });
       sonido.play();
     });
   }
@@ -64,15 +76,32 @@ export class Voz {
     const sintetizador = globalThis.speechSynthesis;
     if (!sintetizador) {
       const milisegundosEstimados = Math.max(1500, texto.length * 60);
-      return new Promise((terminar) => setTimeout(terminar, milisegundosEstimados));
+      return new Promise((terminar) => {
+        const temporizador = setTimeout(terminar, milisegundosEstimados);
+        cancelacion?.addEventListener('abort', () => { clearTimeout(temporizador); terminar(); }, { once: true });
+      });
     }
 
     return new Promise((terminar) => {
       const enunciado = new SpeechSynthesisUtterance(texto);
+      this.enunciadoActual = enunciado;
       enunciado.lang = CODIGO_DE_IDIOMA[idioma];
-      enunciado.onend = () => terminar();
-      enunciado.onerror = () => terminar();
-      cancelacion?.addEventListener('abort', () => { sintetizador.cancel(); terminar(); }, { once: true });
+      const finalizar = () => {
+        if (this.enunciadoActual === enunciado) this.enunciadoActual = undefined;
+        cancelacion?.removeEventListener('abort', alAbortar);
+        terminar();
+      };
+      const alAbortar = () => {
+        // Solo cancela el sintetizador si este enunciado sigue siendo el activo (evita cortar una línea nueva).
+        if (this.enunciadoActual === enunciado) {
+          this.enunciadoActual = undefined;
+          sintetizador.cancel();
+        }
+        terminar();
+      };
+      enunciado.onend = finalizar;
+      enunciado.onerror = finalizar;
+      cancelacion?.addEventListener('abort', alAbortar, { once: true });
       sintetizador.speak(enunciado);
     });
   }

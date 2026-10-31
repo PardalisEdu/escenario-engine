@@ -15,6 +15,7 @@ import { PROFUNDIDAD, prefiereMenosMovimiento, type EscalaDeInterfaz } from './i
 interface Resaltado {
   interactuable: Interactuable;
   icono: Phaser.GameObjects.Text;
+  latidoIcono?: Phaser.Tweens.Tween;
   latido?: Phaser.Tweens.Tween;
   escalaOriginal: { x: number; y: number };
 }
@@ -49,6 +50,7 @@ export class AvisosDeCercania {
   quitar(): void {
     const resaltado = this.resaltado;
     if (!resaltado) return;
+    resaltado.latidoIcono?.remove();
     resaltado.icono.destroy();
     resaltado.latido?.remove();
     resaltado.interactuable.visual?.setScale(resaltado.escalaOriginal.x, resaltado.escalaOriginal.y);
@@ -88,10 +90,11 @@ export class AvisosDeCercania {
       .setScale(this.escala.botones);
 
     const escalaOriginal = { x: visual?.scaleX ?? 1, y: visual?.scaleY ?? 1 };
+    let latidoIcono: Phaser.Tweens.Tween | undefined;
     let latido: Phaser.Tweens.Tween | undefined;
 
     if (!prefiereMenosMovimiento()) {
-      this.escena.tweens.add({ targets: icono, y: icono.y - 8, duration: 350, yoyo: true, repeat: -1 });
+      latidoIcono = this.escena.tweens.add({ targets: icono, y: icono.y - 8, duration: 350, yoyo: true, repeat: -1 });
       if (visual) {
         latido = this.escena.tweens.add({
           targets: visual,
@@ -104,6 +107,6 @@ export class AvisosDeCercania {
       }
     }
 
-    this.resaltado = { interactuable, icono, latido, escalaOriginal };
+    this.resaltado = { interactuable, icono, latidoIcono, latido, escalaOriginal };
   }
 }

@@ -61,6 +61,10 @@ describe('validación', () => {
     const errores = validar({ config: contenido, mapa: mapaTortilleria }).errores;
     expect(errores).toContain('condición "globo" usada en npcs.tortu.dialogo[0] pero no está en estado.objetivos ni estado.variables');
     expect(errores).toContain('secuencia "no_existe" usada en npcs.tortu.alVolver.siNo pero no existe en "secuencias"');
+
+    const conCiclo = copiaDelContenido();
+    conCiclo.secuencias = { ...conCiclo.secuencias, a: [{ secuencia: 'b' }], b: [{ secuencia: 'a' }] };
+    expect(validar({ config: conCiclo, mapa: mapaTortilleria }).errores.some((e) => e.includes('ciclo entre secuencias'))).toBe(true);
   });
 
   test('fase 4 (cruce): puntos con nombre y NPCs sin objeto en el mapa', () => {
@@ -75,7 +79,7 @@ describe('validación', () => {
     expect(validar({ config: npcSinMapa, mapa: mapaTortilleria }).errores).toContain('npcs.tito no tiene objeto de clase npc en la capa "npcs"');
   });
 
-  test('errores del mapa: capa faltante y clase desconocida', () => {
+  test('errores del mapa: capa faltante, clase desconocida, salida duplicada y mapa malformado', () => {
     const mapa = copiaDelMapa();
     mapa.layers = mapa.layers.filter((capa) => capa.name !== 'piso');
     mapa.layers.find((capa) => capa.name === 'decorado')!.objects![0]!.type = 'lámpara';
@@ -83,6 +87,20 @@ describe('validación', () => {
     const errores = validar({ config: contenidoTortilleria, mapa }).errores;
     expect(errores).toContain('mapa: falta la capa requerida "piso"');
     expect(errores).toContain('mapa: objeto #20 "comal" en "decorado" tiene clase desconocida "lámpara"');
+
+    const conConstructor = copiaDelMapa();
+    conConstructor.layers.find((capa) => capa.name === 'decorado')!.objects![0]!.type = 'constructor';
+    expect(validar({ config: contenidoTortilleria, mapa: conConstructor }).errores).toContain(
+      'mapa: objeto #20 "comal" en "decorado" tiene clase desconocida "constructor"',
+    );
+
+    const conDosSalidas = copiaDelMapa();
+    const interaccion = conDosSalidas.layers.find((capa) => capa.name === 'interaccion')!;
+    const salida = interaccion.objects!.find((o) => o.type === 'salida')!;
+    interaccion.objects!.push({ ...salida, id: 888 });
+    expect(validar({ config: contenidoTortilleria, mapa: conDosSalidas }).errores.some((e) => e.includes('solo puede haber un objeto de clase salida'))).toBe(true);
+
+    expect(validar({ config: contenidoTortilleria, mapa: {} as TiledMap }).errores[0]).toContain('falta "layers"');
   });
 
   test('formato v1 sin mapa: layout, coordenadas y formas deprecadas', () => {
@@ -128,12 +146,22 @@ describe('estado y condiciones', () => {
     expect(estado.cumple('objetivosCompletos')).toBe(true);
   });
 
-  test('una partida v1 se convierte a v2', () => {
+  test('una partida v1 se convierte a v2 y se ignoran partidas corruptas o de otro nivel', () => {
     expect(leerPartida('{"v":1,"estado":{"tortillas":true}}', 'tortilleria')).toEqual({
       v: 2,
       nivel: 'tortilleria',
       estado: { tortillas: true },
     });
+    expect(leerPartida('{no es json', 'tortilleria')).toBeUndefined();
+    expect(leerPartida({ v: 2, nivel: 'otro_nivel', estado: { tortillas: true } }, 'tortilleria')).toBeUndefined();
+  });
+
+  test('no confunde propiedades heredadas de Object ni permite __proto__', () => {
+    const maliciosa = JSON.parse('{"__proto__":{"globo":true}}');
+    const estado = new GameState({ objetivos: [], variables: ['globo', 'constructor', 'toString'] }, maliciosa);
+    expect(estado.cumple('tengo constructor')).toBe(false);
+    expect(estado.cumple('toString')).toBe(false);
+    expect(estado.cumple('globo')).toBe(false);
   });
 });
 
@@ -141,10 +169,14 @@ describe('geometría', () => {
   const piso = [{ x: 0, y: 420 }, { x: 2400, y: 420 }, { x: 2400, y: 530 }, { x: 0, y: 530 }];
   const esCaminable = (punto: { x: number; y: number }) => puntoDentroDePoligono(punto, piso);
 
-  test('un toque fuera del piso se ajusta al punto más cercano dentro', () => {
+  test('un toque fuera del piso se ajusta al punto más cercano dentro (incluso en esquinas agudas)', () => {
     const ajustado = ajustarAlPiso({ x: 500, y: 100 }, [piso]);
     expect(ajustado.x).toBeCloseTo(500, 0);
     expect(puntoDentroDePoligono(ajustado, piso)).toBe(true);
+
+    const trianguloAgudo = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 50, y: 10 }];
+    const enEsquina = ajustarAlPiso({ x: 160, y: -5 }, [trianguloAgudo]);
+    expect(puntoDentroDePoligono(enEsquina, trianguloAgudo)).toBe(true);
   });
 
   test('al chocar en diagonal con el borde, el jugador se desliza en horizontal', () => {
@@ -158,13 +190,15 @@ describe('rutas de assets', () => {
   const cdn = ['https://assets.pardalis.mx'];
   const pagina = 'https://pardalis.mx/';
 
-  test('agrega la extensión por defecto y respeta la que ya trae', () => {
+  test('agrega la extensión por defecto y respeta la que ya trae (sin confundirse con puntos en nombres)', () => {
     expect(resolverUrlDeAsset('spr_tommy', 'imagen', raiz, cdn, pagina)).toBe('https://assets.pardalis.mx/aventura/spr_tommy.webp');
     expect(resolverUrlDeAsset('voz/a.ogg', 'audio', raiz, cdn, pagina)).toBe('https://assets.pardalis.mx/aventura/voz/a.ogg');
+    expect(resolverUrlDeAsset('personajes/v1.2', 'imagen', '/assets', [], pagina)).toBe('https://pardalis.mx/assets/personajes/v1.2.webp');
   });
 
-  test('rechaza "..", orígenes fuera de la lista blanca y HTTP', () => {
+  test('rechaza "..", rutas absolutas que escapan de assetsRoot, orígenes fuera de la lista blanca y HTTP', () => {
     expect(() => resolverUrlDeAsset('../secreto', 'imagen', raiz, cdn, pagina)).toThrow();
+    expect(() => resolverUrlDeAsset('/otra/ruta', 'imagen', '/assets/', [], pagina)).toThrow();
     expect(() => resolverUrlDeAsset('https://evil.com/x.png', 'imagen', raiz, cdn, pagina)).toThrow();
     expect(() => resolverUrlDeAsset('x', 'imagen', 'http://assets.pardalis.mx/', cdn, pagina)).toThrow();
   });

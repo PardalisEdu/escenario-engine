@@ -190,6 +190,10 @@ export async function cargarTilesetsExternos(
 
 /** Lee el mapa y deja los errores y advertencias en `diagnostico`. */
 export function leerMapaTiled(mapa: TiledMap, diagnostico: Diagnostico): Mundo {
+  if (!mapa || typeof mapa !== 'object' || !Array.isArray(mapa.layers)) {
+    diagnostico.error('mapa: el archivo .tmj no es un mapa de Tiled válido (falta "layers")');
+    return mundoVacio(0, 0);
+  }
   return new LectorDeMapaTiled(mapa, diagnostico).leer();
 }
 
@@ -214,8 +218,13 @@ class LectorDeMapaTiled {
     private readonly diagnostico: Diagnostico,
   ) {
     const propiedades = propiedadesComoObjeto(mapa.properties);
-    const ancho = Number(propiedades.ancho ?? mapa.width * mapa.tilewidth);
-    const alto = Number(propiedades.alto ?? mapa.height * mapa.tileheight);
+    const anchoCalculado = Number(propiedades.ancho ?? (mapa.width ?? 0) * (mapa.tilewidth ?? 0));
+    const altoCalculado = Number(propiedades.alto ?? (mapa.height ?? 0) * (mapa.tileheight ?? 0));
+    const ancho = Number.isFinite(anchoCalculado) && anchoCalculado > 0 ? anchoCalculado : 0;
+    const alto = Number.isFinite(altoCalculado) && altoCalculado > 0 ? altoCalculado : 0;
+    if (ancho <= 0 || alto <= 0) {
+      diagnostico.error('mapa: las dimensiones del mapa (ancho y alto) deben ser números positivos');
+    }
     this.mundo = mundoVacio(ancho, alto);
   }
 
@@ -315,8 +324,12 @@ class LectorDeMapaTiled {
       clase = 'deco';
     }
 
-    const esDecorado = clase in CATALOGO_DE_DECORADO;
-    const propiedadesEsperadas = esDecorado ? PROPIEDADES_DE_DECORADO : PROPIEDADES_DE_CADA_CLASE[clase];
+    const esDecorado = Object.hasOwn(CATALOGO_DE_DECORADO, clase);
+    const propiedadesEsperadas = esDecorado
+      ? PROPIEDADES_DE_DECORADO
+      : Object.hasOwn(PROPIEDADES_DE_CADA_CLASE, clase)
+        ? PROPIEDADES_DE_CADA_CLASE[clase]
+        : undefined;
     if (!propiedadesEsperadas) {
       this.diagnostico.error(`mapa: ${describir(objeto)} en "${capa}" tiene clase desconocida "${clase}"`);
       return;
@@ -408,6 +421,10 @@ class LectorDeMapaTiled {
   }
 
   private leerSalida(objeto: TiledObjeto, propiedades: Record<string, unknown>): void {
+    if (this.mundo.salida) {
+      this.diagnostico.error(`mapa: solo puede haber un objeto de clase salida (${this.mundo.salida.descripcion} y ${describir(objeto)})`);
+      return;
+    }
     const hotspot = this.formaDe(objeto);
     this.mundo.salida = {
       descripcion: describir(objeto),

@@ -28,7 +28,7 @@ export function revisarEnlaces(contenido: Contenido, minijuegos: string[] | unde
   };
 
   const jugador = contenido.jugador;
-  if (jugador && !contenido.meta.personajes[jugador.personaje]) {
+  if (jugador && !Object.hasOwn(contenido.meta.personajes, jugador.personaje)) {
     diagnostico.error(`jugador.personaje "${jugador.personaje}" no existe en meta.personajes`);
   }
 
@@ -41,7 +41,7 @@ export function revisarEnlaces(contenido: Contenido, minijuegos: string[] | unde
 
   recorrerPasos(contenido, {
     referenciaASecuencia(nombre, ruta) {
-      if (!contenido.secuencias[nombre]) {
+      if (!Object.hasOwn(contenido.secuencias, nombre)) {
         diagnostico.error(`secuencia "${nombre}" usada en ${ruta} pero no existe en "secuencias"`);
       }
     },
@@ -49,6 +49,8 @@ export function revisarEnlaces(contenido: Contenido, minijuegos: string[] | unde
       revisarPaso(paso, ruta, contenido, minijuegos, revisarCondicion, diagnostico);
     },
   });
+
+  revisarCiclosDeSecuencias(contenido.secuencias, diagnostico);
 }
 
 /** Condiciones de las ramas, ramas inalcanzables y "conItem" de alVolver. */
@@ -88,7 +90,7 @@ function revisarPaso(
 ): void {
   switch (paso.tipo) {
     case 'linea':
-      if (!contenido.meta.personajes[paso.hablante]) {
+      if (!Object.hasOwn(contenido.meta.personajes, paso.hablante)) {
         diagnostico.error(`${ruta}: el hablante "${paso.hablante}" no existe en meta.personajes`);
       }
       break;
@@ -135,4 +137,42 @@ function revisarPaso(
     case 'secuencia':
       break; // la referencia se revisa en referenciaASecuencia
   }
+}
+
+/** Detecta llamadas circulares entre secuencias antes de jugar (evita esperar al límite de profundidad en runtime). */
+function revisarCiclosDeSecuencias(secuencias: Record<string, Paso[]>, diagnostico: Diagnostico): void {
+  const visitadas = new Set<string>();
+  const enPila = new Set<string>();
+
+  const referenciasDePasos = (pasos: Paso[]): string[] => {
+    const nombres: string[] = [];
+    for (const paso of pasos) {
+      if (paso.tipo === 'secuencia') nombres.push(paso.nombre);
+      else if (paso.tipo === 'condicional') nombres.push(...referenciasDePasos(paso.pasos));
+      else if (paso.tipo === 'elige') {
+        for (const opcion of paso.opciones) {
+          if (typeof opcion.pasos === 'string') nombres.push(opcion.pasos);
+          else nombres.push(...referenciasDePasos(opcion.pasos));
+        }
+      }
+    }
+    return nombres;
+  };
+
+  const recorrer = (nombre: string, cadena: string[]) => {
+    if (enPila.has(nombre)) {
+      diagnostico.error(`ciclo entre secuencias: ${[...cadena, nombre].join(' → ')}`);
+      return;
+    }
+    if (visitadas.has(nombre) || !Object.hasOwn(secuencias, nombre)) return;
+
+    visitadas.add(nombre);
+    enPila.add(nombre);
+    for (const destino of referenciasDePasos(secuencias[nombre]!)) {
+      recorrer(destino, [...cadena, nombre]);
+    }
+    enPila.delete(nombre);
+  };
+
+  for (const nombre of Object.keys(secuencias)) recorrer(nombre, []);
 }

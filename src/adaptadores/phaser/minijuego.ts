@@ -51,32 +51,62 @@ const DURACION_DEL_FUNDIDO = 300;
 let minijuegosCreados = 0;
 
 export async function jugarMinijuego(datos: DatosDelMinijuego): Promise<MiniGameResult> {
+  datos.cancelacion.throwIfAborted();
   const { escenaDelMundo, clave } = datos;
   const camaraDelMundo = escenaDelMundo.cameras.main;
 
-  await fundirANegro(camaraDelMundo);
+  // Guardamos qué recursos tenía el mundo antes de que el minijuego cargue los suyos.
+  const recursosDelMundo = new Set<string>([
+    ...escenaDelMundo.textures.getTextureKeys(),
+    ...escenaDelMundo.cache.audio.getKeys(),
+  ]);
+
+  await fundirANegro(camaraDelMundo, datos.cancelacion);
+  if (!escenaDelMundo.sys.isActive()) datos.cancelacion.throwIfAborted();
   escenaDelMundo.scene.pause();
 
   minijuegosCreados++;
-  const escena = await crearEscenaVacia(escenaDelMundo, `minijuego:${clave}:${minijuegosCreados}`);
-  escena.cameras.main.fadeIn(DURACION_DEL_FUNDIDO);
-
-  const assets = new GestorDeAssets(escena, datos.assetsRoot, datos.cdn);
+  let escena: Phaser.Scene | undefined;
+  let assets: GestorDeAssets | undefined;
+  let voz: Voz | undefined;
   try {
-    return await esperarResultado(datos, crearContexto(escena, assets, datos.estado));
+    escena = await crearEscenaVacia(escenaDelMundo, `minijuego:${clave}:${minijuegosCreados}`, datos.cancelacion);
+    escena.cameras.main.fadeIn(DURACION_DEL_FUNDIDO);
+
+    assets = new GestorDeAssets(escena, datos.assetsRoot, datos.cdn);
+    voz = new Voz(escena);
+    return await esperarResultado(datos, crearContexto(escena, assets, voz, datos.estado));
   } finally {
-    // Se conserva todo lo que ya usaba el mundo; se borra solo lo exclusivo del minijuego.
-    const texturasDelMundo = new Set(escenaDelMundo.textures.getTextureKeys());
-    assets.liberar(texturasDelMundo);
-    escenaDelMundo.scene.remove(escena.scene.key);
-    escenaDelMundo.scene.resume();
-    camaraDelMundo.fadeIn(DURACION_DEL_FUNDIDO);
+    voz?.callar();
+    const juegoSigueVivo = Boolean(escenaDelMundo.sys?.game?.isRunning && escenaDelMundo.textures);
+    if (juegoSigueVivo) {
+      assets?.liberar(recursosDelMundo);
+      if (escena) escenaDelMundo.scene.remove(escena.scene.key);
+      if (escenaDelMundo.scene.isPaused()) {
+        escenaDelMundo.scene.resume();
+        camaraDelMundo.fadeIn(DURACION_DEL_FUNDIDO);
+      }
+    }
   }
 }
 
-function fundirANegro(camara: Phaser.Cameras.Scene2D.Camera): Promise<void> {
-  return new Promise((terminar) => {
-    camara.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => terminar());
+function fundirANegro(camara: Phaser.Cameras.Scene2D.Camera, cancelacion: AbortSignal): Promise<void> {
+  return new Promise((terminar, rechazar) => {
+    if (cancelacion.aborted) {
+      rechazar(cancelacion.reason);
+      return;
+    }
+    const alCompletar = () => {
+      cancelacion.removeEventListener('abort', alAbortar);
+      terminar();
+    };
+    const alAbortar = () => {
+      camara.off(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, alCompletar);
+      camara.resetFX();
+      rechazar(cancelacion.reason);
+    };
+    cancelacion.addEventListener('abort', alAbortar, { once: true });
+    camara.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, alCompletar);
     camara.fadeOut(DURACION_DEL_FUNDIDO);
   });
 }
@@ -86,10 +116,21 @@ function fundirANegro(camara: Phaser.Cameras.Scene2D.Camera): Promise<void> {
  * Ojo: Phaser puede llamar a `create()` en el mismo momento en que se agrega la escena,
  * por eso el aviso sale de la propia escena y no de un evento al que nos suscribimos después.
  */
-function crearEscenaVacia(escenaDelMundo: Phaser.Scene, clave: string): Promise<Phaser.Scene> {
-  return new Promise((terminar) => {
+function crearEscenaVacia(escenaDelMundo: Phaser.Scene, clave: string, cancelacion: AbortSignal): Promise<Phaser.Scene> {
+  return new Promise((terminar, rechazar) => {
+    if (cancelacion.aborted) {
+      rechazar(cancelacion.reason);
+      return;
+    }
+    const alAbortar = () => {
+      escenaDelMundo.scene.remove(clave);
+      rechazar(cancelacion.reason);
+    };
+    cancelacion.addEventListener('abort', alAbortar, { once: true });
+
     class EscenaDeMinijuego extends Phaser.Scene {
       create() {
+        cancelacion.removeEventListener('abort', alAbortar);
         terminar(this);
       }
     }
@@ -97,8 +138,7 @@ function crearEscenaVacia(escenaDelMundo: Phaser.Scene, clave: string): Promise<
   });
 }
 
-function crearContexto(escena: Phaser.Scene, assets: AssetManager, estado: GameState): MiniGameContext {
-  const voz = new Voz(escena);
+function crearContexto(escena: Phaser.Scene, assets: AssetManager, voz: Voz, estado: GameState): MiniGameContext {
   return {
     scene: escena,
     assets,

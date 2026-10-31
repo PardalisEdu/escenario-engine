@@ -5,8 +5,8 @@ import { cumpleCondicion, type ConsultaDeEstado } from './condiciones';
 import type { Condicion, DeclaracionDeEstado, Valor } from './esquema';
 
 export class GameState implements ConsultaDeEstado {
-  /** Todos los valores actuales: objetivos, variables y flags como "charlas.tortu". */
-  readonly valores: Record<string, Valor> = {};
+  /** Todos los valores actuales: objetivos, variables y flags como "charlas.tortu". Sin prototipo para evitar colisiones como "constructor". */
+  readonly valores: Record<string, Valor> = Object.create(null) as Record<string, Valor>;
 
   /** Se llama cuando un objetivo pasa de no cumplido a cumplido. */
   alCompletarObjetivo?: (objetivo: string) => void;
@@ -21,15 +21,21 @@ export class GameState implements ConsultaDeEstado {
     if (declaracion.dinero !== undefined) {
       this.valores.dinero = declaracion.dinero;
     }
-    Object.assign(this.valores, valoresGuardados);
+    for (const [clave, valor] of Object.entries(valoresGuardados)) {
+      if (clave === '__proto__') continue;
+      if (typeof valor === 'string' || typeof valor === 'number' || typeof valor === 'boolean') {
+        this.valores[clave] = valor;
+      }
+    }
   }
 
   valorDe(nombre: string): Valor | undefined {
-    return this.valores[nombre];
+    return Object.hasOwn(this.valores, nombre) ? this.valores[nombre] : undefined;
   }
 
   poner(nombre: string, valor: Valor): void {
-    const yaEstabaCumplido = Boolean(this.valores[nombre]);
+    if (nombre === '__proto__') return;
+    const yaEstabaCumplido = Boolean(this.valorDe(nombre));
     this.valores[nombre] = valor;
 
     const esObjetivo = this.declaracion.objetivos.includes(nombre);

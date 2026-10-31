@@ -76,10 +76,16 @@ export class Conversacion {
 
     return new Promise((terminar) => {
       let terminada = false;
+      let temporizadorDeCierre: Phaser.Time.TimerEvent | undefined;
+      const hablaDeEstaLinea = new AbortController();
+
       const cerrar = () => {
         if (terminada) return;
         terminada = true;
         this.alAvanzar = undefined;
+        temporizadorDeCierre?.remove();
+        cancelacion.removeEventListener('abort', cerrar);
+        hablaDeEstaLinea.abort();
         globo.destruir();
         this.voz.callar();
         actor?.animar('idle');
@@ -92,10 +98,10 @@ export class Conversacion {
       };
       cancelacion.addEventListener('abort', cerrar, { once: true });
 
-      this.decirLinea(linea, texto, cancelacion).then(() => {
+      this.decirLinea(linea, texto, hablaDeEstaLinea.signal).then(() => {
         if (terminada) return;
         globo.completar();
-        this.datos.escena.time.delayedCall(ESPERA_AL_TERMINAR_LA_VOZ, cerrar);
+        temporizadorDeCierre = this.datos.escena.time.delayedCall(ESPERA_AL_TERMINAR_LA_VOZ, cerrar);
       });
     });
   }
@@ -108,6 +114,7 @@ export class Conversacion {
       const lectura = new AbortController(); // para dejar de leer en cuanto se elija
 
       const cerrarMenu = () => {
+        cancelacion.removeEventListener('abort', cerrarMenu);
         lectura.abort();
         this.voz.callar();
         menu.destruir();

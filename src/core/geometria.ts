@@ -54,6 +54,7 @@ export function puntoDentroDeForma(punto: Punto, forma: Forma): boolean {
   // Elipse: (dx / radioX)² + (dy / radioY)² <= 1
   const radioX = forma.ancho / 2;
   const radioY = forma.alto / 2;
+  if (radioX <= 0 || radioY <= 0) return false;
   const dx = (punto.x - (forma.x + radioX)) / radioX;
   const dy = (punto.y - (forma.y + radioY)) / radioY;
   return dx * dx + dy * dy <= 1;
@@ -101,10 +102,10 @@ export function ajustarAlPiso(punto: Punto, pisos: Punto[][]): Punto {
   let mejorPunto = punto;
   let mejorDistancia = Infinity;
   let mejorPoligono: Punto[] = [];
-  let bordeA = punto;
-  let bordeB = punto;
+  let mejorIndice = 0;
 
   for (const poligono of pisos) {
+    if (poligono.length < 3) continue;
     for (let i = 0; i < poligono.length; i++) {
       const a = poligono[i]!;
       const b = poligono[(i + 1) % poligono.length]!;
@@ -114,26 +115,68 @@ export function ajustarAlPiso(punto: Punto, pisos: Punto[][]): Punto {
         mejorPunto = candidato;
         mejorDistancia = distanciaCandidato;
         mejorPoligono = poligono;
-        bordeA = a;
-        bordeB = b;
+        mejorIndice = i;
       }
     }
   }
 
-  return empujarHaciaAdentro(mejorPunto, bordeA, bordeB, mejorPoligono);
+  if (mejorPoligono.length < 3) return punto;
+  return empujarHaciaAdentro(mejorPunto, mejorIndice, mejorPoligono);
 }
 
 /**
- * Un punto exactamente sobre el borde es ambiguo (puede contar como dentro o fuera),
- * así que se mueve 1 px en dirección perpendicular al borde, hacia el interior.
+ * Un punto exactamente sobre el borde o un vértice es ambiguo (puede contar como dentro o fuera),
+ * así que se empuja ligeramente hacia el interior del polígono.
  */
-function empujarHaciaAdentro(punto: Punto, bordeA: Punto, bordeB: Punto, poligono: Punto[]): Punto {
-  const largo = distancia(bordeA, bordeB) || 1;
-  const perpendicular = { x: -(bordeB.y - bordeA.y) / largo, y: (bordeB.x - bordeA.x) / largo };
+function empujarHaciaAdentro(punto: Punto, indiceDeBorde: number, poligono: Punto[]): Punto {
+  const n = poligono.length;
+  const a = poligono[indiceDeBorde]!;
+  const b = poligono[(indiceDeBorde + 1) % n]!;
+  const largo = distancia(a, b) || 1;
+  const perpendicular = { x: -(b.y - a.y) / largo, y: (b.x - a.x) / largo };
 
-  const haciaUnLado = { x: punto.x + perpendicular.x, y: punto.y + perpendicular.y };
-  if (puntoDentroDePoligono(haciaUnLado, poligono)) return haciaUnLado;
-  return { x: punto.x - perpendicular.x, y: punto.y - perpendicular.y };
+  // 1) Perpendicular al segmento (funciona en tramos rectos y esquinas anchas).
+  for (const signo of [1, -1]) {
+    const candidato = { x: punto.x + signo * perpendicular.x, y: punto.y + signo * perpendicular.y };
+    if (puntoDentroDePoligono(candidato, poligono)) return candidato;
+  }
+
+  // 2) En esquinas agudas, usar la bisectriz hacia las aristas vecinas del vértice más cercano.
+  const indiceVertice = distancia(punto, a) <= distancia(punto, b) ? indiceDeBorde : (indiceDeBorde + 1) % n;
+  const vertice = poligono[indiceVertice]!;
+  const previo = poligono[(indiceVertice - 1 + n) % n]!;
+  const siguiente = poligono[(indiceVertice + 1) % n]!;
+  const uPrev = vectorUnitario(vertice, previo);
+  const uSig = vectorUnitario(vertice, siguiente);
+  const bisectriz = vectorUnitario({ x: 0, y: 0 }, { x: uPrev.x + uSig.x, y: uPrev.y + uSig.y });
+
+  for (const paso of [1, 2, 0.5, 0.1]) {
+    for (const signo of [1, -1]) {
+      const candidato = { x: punto.x + signo * bisectriz.x * paso, y: punto.y + signo * bisectriz.y * paso };
+      if (puntoDentroDePoligono(candidato, poligono)) return candidato;
+    }
+  }
+
+  // 3) Respaldo final: acercarse un poco hacia el centroide del polígono.
+  const centro = centroide(poligono);
+  const haciaCentro = vectorUnitario(punto, centro);
+  const candidatoCentro = { x: punto.x + haciaCentro.x, y: punto.y + haciaCentro.y };
+  return puntoDentroDePoligono(candidatoCentro, poligono) ? candidatoCentro : centro;
+}
+
+function vectorUnitario(desde: Punto, hasta: Punto): Punto {
+  const d = distancia(desde, hasta);
+  return d === 0 ? { x: 0, y: 0 } : { x: (hasta.x - desde.x) / d, y: (hasta.y - desde.y) / d };
+}
+
+function centroide(poligono: Punto[]): Punto {
+  let sx = 0;
+  let sy = 0;
+  for (const p of poligono) {
+    sx += p.x;
+    sy += p.y;
+  }
+  return { x: sx / poligono.length, y: sy / poligono.length };
 }
 
 /**

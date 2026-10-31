@@ -19,7 +19,9 @@ const Tortilleria: MiniGameFactory = ({ scene }) => new Promise((res) => {
   scene.add.text(width - 20, 20, '✖', { fontSize: 48 }).setOrigin(1, 0).setInteractive().once('pointerdown', () => res({ exito: false }));
 });
 
-const config = await fetch('/niveles/tortilleria.json').then((r) => r.json());
+const respuesta = await fetch('/niveles/tortilleria.json');
+if (!respuesta.ok) throw new Error(`No se pudo cargar el nivel (${respuesta.status})`);
+const config = await respuesta.json();
 const juego = new EscenarioEngine({
   mapa: '/niveles/tortilleria.tmj',
   config,

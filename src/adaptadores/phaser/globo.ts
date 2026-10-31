@@ -76,8 +76,10 @@ export class Globo {
 
     // 4. Que no se salga de la pantalla: se acomoda dentro de lo que ve la cámara.
     const vista = escena.cameras.main.worldView;
-    const xVisible = Phaser.Math.Clamp(x, vista.x + ancho / 2 + 8, vista.right - ancho / 2 - 8);
-    const yVisible = Math.max(y, alto + 70 * escala.globos);
+    const xMinimo = vista.x + ancho / 2 + 8;
+    const xMaximo = Math.max(xMinimo, vista.right - ancho / 2 - 8);
+    const xVisible = Phaser.Math.Clamp(x, xMinimo, xMaximo);
+    const yVisible = Math.max(y, vista.y + alto + 70 * escala.globos);
     this.contenedor = escena.add.container(xVisible, yVisible, hijos).setDepth(PROFUNDIDAD.globos);
 
     this.empezarAEscribir(escena, opciones.milisegundosPorLetra ?? MILISEGUNDOS_POR_LETRA_POR_DEFECTO);
@@ -99,16 +101,17 @@ export class Globo {
   }
 
   private empezarAEscribir(escena: Phaser.Scene, milisegundosPorLetra: number): void {
-    if (milisegundosPorLetra <= 0 || this.textoCompleto.length <= 1) return;
+    const caracteres = Array.from(this.textoCompleto);
+    if (milisegundosPorLetra <= 0 || caracteres.length <= 1) return;
 
     let letrasVisibles = 0;
     this.texto.setText('');
     this.escritura = escena.time.addEvent({
       delay: milisegundosPorLetra,
-      repeat: this.textoCompleto.length - 1,
+      repeat: caracteres.length - 1,
       callback: () => {
         letrasVisibles++;
-        this.texto.setText(this.textoCompleto.slice(0, letrasVisibles));
+        this.texto.setText(caracteres.slice(0, letrasVisibles).join(''));
       },
     });
   }
