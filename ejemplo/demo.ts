@@ -38,9 +38,15 @@ juego.on('palabra', (p) => console.log('álbum:', p));
 juego.on('escenaTerminada', (destino) => { guardar(); estado.textContent = `escenaTerminada → ${destino}`; });
 juego.on('error', (e) => { estado.textContent = `error: ${e.message.split('\n')[0]}`; });
 juego.mount('#contenedor');
-addEventListener('pagehide', () => { guardar(); juego.destroy(); });
+const alSalirDeLaPagina = () => { guardar(); juego.destroy(); };
+addEventListener('pagehide', alSalirDeLaPagina);
 
 let proyeccion = false;
 document.querySelector('#proyeccion')!.addEventListener('click', () => juego.setProyeccion((proyeccion = !proyeccion)));
-document.querySelector('#reiniciar')!.addEventListener('click', () => { localStorage.removeItem(CLAVE); location.reload(); });
+// Sin quitar el oyente de pagehide, la recarga volvería a guardar la partida recién borrada.
+document.querySelector('#reiniciar')!.addEventListener('click', () => {
+  removeEventListener('pagehide', alSalirDeLaPagina);
+  localStorage.removeItem(CLAVE);
+  location.reload();
+});
 (globalThis as any).juego = juego;
