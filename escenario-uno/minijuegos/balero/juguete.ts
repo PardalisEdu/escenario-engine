@@ -146,7 +146,11 @@ function trazoDeLaZonaBuena(): string {
   const adentroDerecha = puntoDesdeElNudo(TOLERANCIA_EN_GRADOS, RADIO_INTERIOR_DE_LA_ZONA);
   const afueraDerecha = puntoDesdeElNudo(TOLERANCIA_EN_GRADOS, RADIO_EXTERIOR_DE_LA_ZONA);
   const afueraIzquierda = puntoDesdeElNudo(-TOLERANCIA_EN_GRADOS, RADIO_EXTERIOR_DE_LA_ZONA);
-  const arcoDeAdentro = `A${RADIO_INTERIOR_DE_LA_ZONA} ${RADIO_INTERIOR_DE_LA_ZONA} 0 0 0 ${adentroDerecha.x} ${adentroDerecha.y}`;
-  const arcoDeAfuera = `A${RADIO_EXTERIOR_DE_LA_ZONA} ${RADIO_EXTERIOR_DE_LA_ZONA} 0 0 1 ${afueraIzquierda.x} ${afueraIzquierda.y}`;
-  return `M${adentroIzquierda.x} ${adentroIzquierda.y} ${arcoDeAdentro} L${afueraDerecha.x} ${afueraDerecha.y} ${arcoDeAfuera} Z`;
+  const radioDeAdentro = `${RADIO_INTERIOR_DE_LA_ZONA} ${RADIO_INTERIOR_DE_LA_ZONA}`;
+  const radioDeAfuera = `${RADIO_EXTERIOR_DE_LA_ZONA} ${RADIO_EXTERIOR_DE_LA_ZONA}`;
+  // En un trazo de SVG, «A» dibuja un arco de círculo hasta el punto que se le da.
+  const arcoDeAdentro = `A${radioDeAdentro} 0 0 0 ${adentroDerecha.x} ${adentroDerecha.y}`;
+  const arcoDeAfuera = `A${radioDeAfuera} 0 0 1 ${afueraIzquierda.x} ${afueraIzquierda.y}`;
+  const inicio = `M${adentroIzquierda.x} ${adentroIzquierda.y}`;
+  return `${inicio} ${arcoDeAdentro} L${afueraDerecha.x} ${afueraDerecha.y} ${arcoDeAfuera} Z`;
 }

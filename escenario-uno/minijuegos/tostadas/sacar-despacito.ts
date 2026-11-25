@@ -18,7 +18,7 @@ import type { Plato } from './plato.ts';
 const RECORRIDO_EN_TAMANOS = 0.75;
 /**
  * La rapidez con la que truena, en tamaños de tostada por segundo. Es generosa a propósito (niños de 6 años):
- * solo truena con un jalón, es decir, si se intenta sacar la tostada completa en menos de un cuarto de segundo, más o menos.
+ * solo truena con un jalón, es decir, si se intenta sacar la tostada completa en un cuarto de segundo o menos.
  */
 const LIMITE_EN_TAMANOS_POR_SEGUNDO = 3.5;
 /** Desde esta parte del límite la tostada empieza a temblar, como aviso. */

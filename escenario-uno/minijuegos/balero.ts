@@ -61,7 +61,8 @@ export const Balero: Minijuego = (contexto) => {
     const bobby = crearPersonaje(marco, escena, { reposo: 'spr_bobby', gesto: 'bobby_feliz', clase: 'balero-bobby' });
     const puesto: Puesto = { marco, juguete, guajo, bobby };
 
-    marco.indicar(`¡Ensarta el balero ${numeroEnEspanol(meta)} veces! Toca cuando pase por la luz.`, ['item_balero', 'item_maiz']);
+    const instruccion = `¡Ensarta el balero ${numeroEnEspanol(meta)} veces! Toca cuando pase por la luz.`;
+    marco.indicar(instruccion, ['item_balero', 'item_maiz']);
     void guajo.gesticular();
 
     let aciertos = 0;
