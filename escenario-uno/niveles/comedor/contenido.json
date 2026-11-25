@@ -1,0 +1,95 @@
+{
+  "meta": {
+    "id": "comedor",
+    "titulo": "El pozole en familia",
+    "personajes": {
+      "pardi": { "idioma": "es", "sprite": "spr_pardi" },
+      "mama": { "idioma": "es", "sprite": "mama_olla" },
+      "bobby": { "idioma": "en", "sprite": "spr_bobby" }
+    }
+  },
+  "mundo": {
+    "camara": { "distancia": 11, "altura": 3.8, "giro": 0 },
+    "sonidos": { "musica": "mus_fiesta" },
+    "planos": {
+      "plano_mesa": { "mira": "centro_comedor", "distancia": 10.5, "altura": 3.4, "giro": 0 },
+      "plano_entrada": { "mira": "mama_llega", "distancia": 7.5, "altura": 2.8, "giro": 12 },
+      "plano_primos": { "mira": "frente_mesa", "distancia": 6.5, "altura": 2.5, "giro": -8 },
+      "plano_final": { "mira": "centro_comedor", "distancia": 13, "altura": 3.7, "giro": 0 }
+    }
+  },
+  "cinematicas": {
+    "final": {
+      "inicia": "alEntrar",
+      "cuando": [],
+      "pasos": [
+        { "camara": "plano_mesa" },
+        { "fundido": "abrir", "duracion": 1.6 },
+        { "espera": 1.5 },
+        {
+          "juntos": [
+            { "aparece": "mama", "en": "entra" },
+            { "camara": "plano_entrada", "duracion": 1.4 }
+          ]
+        },
+        { "camina": "mama_llega", "quien": "mama" },
+        { "dice": "mama", "texto": "¡Ya está el pozole! ¡Vengan todos a la mesa!", "audio": "vo_mama_pozole" },
+        {
+          "juntos": [
+            { "aparece": "pardi", "en": "entra" },
+            { "aparece": "bobby", "en": "entra_2" },
+            { "camara": "plano_primos", "duracion": 1.4 }
+          ]
+        },
+        {
+          "juntos": [
+            { "camina": "pardi_llega", "quien": "pardi" },
+            { "camina": "bobby_llega", "quien": "bobby" }
+          ]
+        },
+        { "mira": "pardi", "hacia": "bobby" },
+        { "mira": "bobby", "hacia": "pardi" },
+        { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+        {
+          "dice": "bobby",
+          "texto": "Pozole! Yummy!",
+          "trad": "¡Pozole! ¡Qué rico!",
+          "en": "yummy",
+          "es": "rico",
+          "audio": "vo_bobby_yummy"
+        },
+        { "anima": "pardi", "con": "pardi_feliz", "repite": true },
+        { "dice": "pardi", "texto": "¡Y lo trajimos nosotros dos, del mercado!", "audio": "vo_pardi_nosotros" },
+        { "anima": "bobby", "con": "spr_bobby", "repite": true },
+        {
+          "dice": "bobby",
+          "texto": "I love my family!",
+          "trad": "¡Quiero mucho a mi familia!",
+          "en": "family",
+          "es": "familia",
+          "audio": "vo_bobby_family"
+        },
+        { "anima": "pardi", "con": "spr_pardi", "repite": true },
+        {
+          "juntos": [
+            { "camara": "plano_final", "duracion": 2.4 },
+            { "camina": "lugar_pardi", "quien": "pardi" },
+            { "camina": "lugar_bobby", "quien": "bobby" },
+            { "camina": "lugar_mama", "quien": "mama" }
+          ]
+        },
+        { "mira": "pardi", "hacia": "centro_comedor" },
+        { "mira": "bobby", "hacia": "centro_comedor" },
+        { "mira": "mama", "hacia": "centro_comedor" },
+        { "anima": "pardi", "con": "pardi_feliz", "repite": true },
+        { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+        { "efecto": "confeti" },
+        { "dice": "mama", "texto": "¡Provecho, familia!", "audio": "vo_mama_provecho" },
+        { "efecto": "confeti" },
+        { "espera": 2.5 },
+        { "fundido": "cerrar", "duracion": 1.8 },
+        { "sale": "Fin" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,59 @@
+/* Minijuego «Cartas»: Madame Lula, la mesa con mantel morado y las tres cartas que se voltean.
+   Las medidas usan `cqw`/`cqh` (centésimas del ancho y del alto de la escena) para caber en cualquier pantalla. */
+
+.cartas-escena {
+  position: absolute; inset: 0; container-type: size;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 2cqw; padding: 2cqh 2.5cqw 4cqh;
+}
+
+.cartas-lula { height: min(66cqh, 27cqw); width: auto; align-self: end; transform-origin: 50% 100%; }
+.cartas-lula-adivina { animation: cartas-adivina 1.2s; }
+
+/* La mesa vista desde arriba: un mantel morado con una orilla de puntadas amarillas. */
+.cartas-mantel {
+  position: relative; justify-self: center; display: flex; justify-content: center; align-items: center; gap: 2cqw; padding: 7cqh 3.5cqw;
+  background: #7b3fa0; border: 6px solid var(--mj-tinta); border-radius: 40px; box-shadow: 0 8px 0 var(--mj-tinta);
+  outline: 4px dashed #fed449; outline-offset: -16px;
+}
+/* Las estrellitas del mantel van en una capa aparte, metida hacia adentro, para que no se encimen con las puntadas. */
+.cartas-mantel::before {
+  content: ''; position: absolute; inset: 24px; border-radius: 18px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Cpath d='M18 8l2.9 6.4 7 .7-5.2 4.7 1.5 6.9-6.2-3.6-6.2 3.6 1.5-6.9-5.2-4.7 7-.7z' fill='%23fed449'/%3E%3Cpath d='M54 44l1.7 3.8 4.2.4-3.1 2.8.9 4.1-3.7-2.1-3.7 2.1.9-4.1-3.1-2.8 4.2-.4z' fill='%23c9a3e0'/%3E%3C/svg%3E") center / 72px 72px space; /* `space`: solo estrellas enteras, ninguna cortada en la orilla */
+}
+
+/* --- Una carta: el botón da la perspectiva y `cartas-giro` es lo que da la vuelta --- */
+.cartas-carta {
+  position: relative; /* para quedar encima de las estrellitas del mantel */
+  width: min(14.5cqw, 44cqh); aspect-ratio: 5 / 7; border: 0; background: none;
+  perspective: 900px; transition: translate 0.15s;
+}
+.cartas-carta:not(.cartas-carta-volteada):hover { translate: 0 -6px; }
+.cartas-giro {
+  position: relative; display: block; width: 100%; height: 100%;
+  transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.cartas-carta-volteada .cartas-giro { transform: rotateY(180deg); }
+/* OJO: la sombra va en cada cara y no en `cartas-giro`: un `filter` ahí aplana el giro 3D y la carta
+   enseñaría su reverso al revés en lugar del símbolo. */
+.cartas-cara { position: absolute; inset: 0; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.cartas-reverso { filter: drop-shadow(0 6px 0 rgb(43 16 60 / 0.55)); }
+.cartas-frente {
+  transform: rotateY(180deg); display: grid; place-items: center;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 13% / 9.5%; box-shadow: 0 6px 0 rgb(43 16 60 / 0.55);
+  /* Un marquito dorado por dentro, como el del reverso. */
+  outline: 3px dotted #f6b21a; outline-offset: -11px;
+}
+.cartas-simbolo { width: 78%; height: auto; aspect-ratio: 1; object-fit: contain; }
+
+/* La palomita para seguir: guarda su lugar desde el principio y aparece al voltear la primera carta. */
+.cartas-seguir { transition: opacity 0.3s, scale 0.3s; }
+.cartas-seguir:disabled { opacity: 0; scale: 0.4; pointer-events: none; }
+
+@keyframes cartas-adivina { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-4deg); } 60% { transform: rotate(4deg); } }
+
+@media (max-height: 520px) {
+  .cartas-mantel { border-radius: 26px; outline-offset: -10px; outline-width: 3px; }
+  .cartas-mantel::before { inset: 16px; background-size: 48px 48px; }
+  .cartas-frente { outline-offset: -8px; }
+  .cartas-seguir { width: 76px; height: 76px; }
+}

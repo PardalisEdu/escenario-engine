@@ -1,0 +1,22 @@
+{
+  "name": "@pardalis/escenario-uno",
+  "version": "0.1.0",
+  "description": "Escenario Uno del modo Aventura de Pardalis: el mandado para el pozole",
+  "license": "MPL-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "jugar": "bun servidor.ts",
+    "check": "tsc --noEmit && echo 'No type errors'",
+    "validar": "bun herramientas/validar-niveles.ts",
+    "assets": "bun herramientas/generar-manifiestos.ts"
+  },
+  "dependencies": {
+    "@pardalis/escenario-engine": "github:tuysh/engine-game-pardalis#58fe181"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4",
+    "@types/three": "^0.187.0",
+    "typescript": "^7.0.2"
+  }
+}

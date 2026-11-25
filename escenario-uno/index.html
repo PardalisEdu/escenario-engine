@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pardalis · Escenario Uno: el mandado</title>
+    <link rel="icon" href="./interfaz/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./interfaz/estilos.css" />
+    <link rel="stylesheet" href="./minijuegos/comun/minijuegos.css" />
+    <link rel="stylesheet" href="./minijuegos/verduleria.css" />
+    <link rel="stylesheet" href="./minijuegos/tostadas.css" />
+    <link rel="stylesheet" href="./minijuegos/balero.css" />
+    <link rel="stylesheet" href="./minijuegos/chiles.css" />
+    <link rel="stylesheet" href="./minijuegos/rascadita.css" />
+    <link rel="stylesheet" href="./minijuegos/cartas.css" />
+  </head>
+  <body>
+    <div id="juego"></div>
+    <div id="interfaz"></div>
+    <!-- Lo que se ve mientras cargan los dibujos del nivel: el logo de Pardalis brincando y una barra. -->
+    <div id="cargando" role="status" aria-label="Cargando">
+      <img class="cargando-logo" src="./interfaz/favicon.svg" alt="" />
+      <div class="cargando-barra"><div id="cargando-avance"></div></div>
+    </div>
+    <pre id="aviso" hidden></pre>
+    <script type="module" src="./juego.ts"></script>
+  </body>
+</html>

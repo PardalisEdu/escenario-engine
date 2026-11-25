@@ -1,0 +1,98 @@
+/* Estilos del minijuego «Balero» (minijuegos/balero.ts y la carpeta minijuegos/balero/).
+   Arriba va el contador de aciertos; abajo, Don Guajo a la izquierda, el balero en medio y Bobby a la derecha. */
+
+.balero-pantalla {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  column-gap: clamp(8px, 3vw, 40px);
+  row-gap: clamp(4px, 1.5vh, 12px);
+  padding: 8px 24px 16px;
+  /* Toda la pantalla es el botón: se toca en cualquier parte. */
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* --- El contador: una marca por cada acierto que falta --- */
+.balero-contador {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(6px, 1.2vw, 12px);
+  padding: 6px 14px;
+  background: var(--mj-papel);
+  border: 5px solid var(--mj-tinta);
+  border-radius: 40px;
+  box-shadow: 0 5px 0 var(--mj-tinta);
+}
+.balero-marca {
+  width: clamp(40px, 8.5vh, 60px);
+  height: clamp(40px, 8.5vh, 60px);
+  display: grid;
+  place-items: center;
+  border: 4px dashed rgb(87 45 9 / 0.4);
+  border-radius: 50%;
+}
+.balero-marca-dibujo { width: 84%; height: 84%; opacity: 0.28; filter: grayscale(1); }
+.balero-marca-llena { background: var(--mj-acento); border: 4px solid var(--mj-tinta); }
+.balero-marca-llena .balero-marca-dibujo { opacity: 1; filter: none; }
+
+/* --- Los personajes que miran --- */
+.balero-guajo,
+.balero-bobby {
+  align-self: end;
+  height: min(86%, 320px);
+  max-width: 100%;
+  object-fit: contain;
+  object-position: bottom;
+}
+.balero-guajo { justify-self: end; }
+/* Los dibujos miran a la derecha: Bobby se voltea para ver el balero. */
+.balero-bobby { justify-self: start; transform: scaleX(-1); }
+
+/* --- El balero --- */
+/* En pantallas angostas y altas (una tablet) el balero no crece de más, para dejarles lugar a los personajes. */
+.balero-juguete { align-self: end; height: min(100%, 46vw); aspect-ratio: 400 / 470; min-height: 0; }
+.balero-dibujo { display: block; width: 100%; height: 100%; overflow: visible; }
+.balero-cordon { fill: none; stroke-width: 4; }
+/* La zona buena: una franja de luz que se prende cuando el barrilito pasa por ella. */
+.balero-zona {
+  fill: var(--mj-acento);
+  fill-opacity: 0.4;
+  stroke: var(--mj-papel);
+  stroke-width: 5;
+  stroke-dasharray: 3 13;
+  transition: fill-opacity 0.08s;
+}
+.balero-zona-encendida { fill-opacity: 0.95; }
+
+/* Al ensartarse, el barrilito se aplasta tantito sobre el palito, como un brinquito de gusto. */
+.balero-barrilito-cuerpo { transform-box: fill-box; transform-origin: 50% 100%; }
+.balero-juguete-ensartado .balero-barrilito-cuerpo { animation: balero-aplastar 0.45s ease-out; }
+/* Al no atinarle, el palito se sacude por el golpe. */
+.balero-palito { transform-box: fill-box; transform-origin: 50% 100%; }
+.balero-juguete-golpeado .balero-palito { animation: balero-sacudir 0.4s ease-out; }
+
+@keyframes balero-aplastar {
+  0% { transform: scale(1.18, 0.8); }
+  45% { transform: scale(0.92, 1.1); }
+  100% { transform: scale(1, 1); }
+}
+@keyframes balero-sacudir {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-7deg); }
+  65% { transform: rotate(5deg); }
+}
+
+/* Pantallas bajitas (un teléfono acostado): el contador se sube encima de Don Guajo
+   para que el balero ocupe todo el alto y se vea lo más grande posible. */
+@media (max-height: 520px) {
+  .balero-contador { grid-column: 1; grid-row: 1; padding: 4px 10px; gap: 4px; }
+  .balero-marca { width: 34px; height: 34px; border-width: 3px; }
+  .balero-guajo { grid-column: 1; grid-row: 2; height: 100%; justify-self: center; }
+  .balero-juguete { grid-column: 2; grid-row: 1 / span 2; }
+  .balero-bobby { grid-column: 3; grid-row: 1 / span 2; height: min(80%, 320px); }
+}

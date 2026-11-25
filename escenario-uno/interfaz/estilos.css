@@ -1,0 +1,341 @@
+/* Estilos de la página y de la interfaz del sitio (lo que va encima del juego).
+   Los globos de diálogo y los botones del motor no se tocan aquí: viven dentro del motor.
+   Todo sigue el estilo del logo de Pardalis: contorno café grueso, colores planos y esquinas redondas. */
+
+:root {
+  --tinta: #572d09;
+  --papel: #fff6e0;
+  --amarillo: #fed449;
+  --rosa: #e8338b;
+  --turquesa: #17b5b0;
+  /* Variables que el motor lee para pintar sus globos y tarjetas con los colores del escenario. */
+  --escenario-fuente: ui-rounded, 'Nunito', 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  --escenario-color-globo: #fff6e0;
+  --escenario-color-texto: #572d09;
+  --escenario-color-acento: #e8338b;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #2b1a0c;
+  font-family: ui-rounded, 'Nunito', 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+}
+#juego {
+  width: 100%;
+  height: 100%;
+}
+/* La interfaz cubre toda la pantalla pero deja pasar los toques al juego; solo sus piezas los reciben. */
+#interfaz {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+#aviso {
+  position: fixed;
+  inset: 16px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border-radius: 8px;
+  background: #fff4f4;
+  color: #7a1f1f;
+  font: 16px/1.5 system-ui, sans-serif;
+  white-space: pre-wrap;
+  z-index: 10;
+}
+
+/* ---------- La pantalla de carga ---------- */
+#cargando {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background:
+    radial-gradient(circle at 30px 30px, rgb(255 255 255 / 0.18) 9px, transparent 10px) 0 0 / 90px 90px,
+    linear-gradient(#ffe27b, #f58220);
+  transition: opacity 0.4s;
+}
+#cargando.cargando-lista {
+  opacity: 0;
+  pointer-events: none;
+}
+.cargando-logo {
+  width: min(40vw, 220px);
+  animation: cargando-brinco 0.9s ease-in-out infinite alternate;
+}
+.cargando-barra {
+  width: min(60vw, 360px);
+  height: 26px;
+  padding: 3px;
+  background: var(--papel);
+  border: 5px solid var(--tinta);
+  border-radius: 999px;
+  box-shadow: 0 5px 0 var(--tinta);
+}
+#cargando-avance {
+  width: 0;
+  height: 100%;
+  background: var(--rosa);
+  border-radius: 999px;
+  transition: width 0.2s;
+}
+@keyframes cargando-brinco {
+  from { transform: translateY(0) rotate(-3deg); }
+  to { transform: translateY(-18px) rotate(3deg); }
+}
+
+/* ---------- El tablero: lista del mandado a la izquierda; dinero, estrellas y cuaderno a la derecha ---------- */
+.hud {
+  position: absolute;
+  inset: 0;
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  color: var(--tinta);
+  font-weight: 800;
+  transition: opacity 0.3s, transform 0.3s;
+}
+.hud-escondido {
+  opacity: 0;
+  transform: translateY(-16px);
+  visibility: hidden;
+}
+.hud > * {
+  pointer-events: auto;
+}
+
+/* La lista: una hojita de papel un poco chueca, con ocho dibujos. */
+.hud-lista {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 16px 10px 10px;
+  background:
+    linear-gradient(var(--rosa) 0 0) 0 0 / 100% 10px no-repeat,
+    repeating-linear-gradient(transparent 0 30px, rgb(23 181 176 / 0.25) 30px 32px),
+    var(--papel);
+  border: 5px solid var(--tinta);
+  border-radius: 14px;
+  box-shadow: 0 5px 0 var(--tinta);
+  transform: rotate(-2deg);
+  transform-origin: top left;
+}
+.hud-lista-cosa {
+  position: relative;
+  width: 48px;
+  height: 48px;
+}
+.hud-lista-dibujo {
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s, filter 0.3s;
+}
+.hud-lista-palomita {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 26px;
+  height: 26px;
+  transform: scale(0);
+  transition: transform 0.35s cubic-bezier(0.2, 1.8, 0.4, 1);
+}
+.hud-lista-conseguida .hud-lista-dibujo {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+.hud-lista-conseguida .hud-lista-palomita {
+  transform: scale(1);
+}
+
+.hud-derecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  /* Deja libre la esquina donde el motor pone sus botones. */
+  margin-right: 4px;
+}
+.hud-pastilla,
+.hud-cuaderno {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 16px 0 8px;
+  background: var(--papel);
+  border: 5px solid var(--tinta);
+  border-radius: 999px;
+  box-shadow: 0 5px 0 var(--tinta);
+  font: inherit;
+  font-size: 24px;
+  color: inherit;
+}
+.hud-pastilla-dibujo {
+  width: 36px;
+  height: 36px;
+}
+.hud-cuaderno {
+  cursor: pointer;
+  background: var(--amarillo);
+  padding-left: 14px;
+}
+.hud-cuaderno:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--tinta);
+}
+.hud-cuaderno-letras {
+  font-size: 20px;
+}
+.hud-cuaderno-cuenta {
+  min-width: 30px;
+  padding: 0 6px;
+  text-align: center;
+  background: var(--rosa);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 20px;
+}
+.hud-palabras {
+  max-width: min(360px, 70vw);
+  max-height: 50vh;
+  overflow: auto;
+  padding: 12px;
+  background: var(--papel);
+  border: 5px solid var(--tinta);
+  border-radius: 22px;
+  box-shadow: 0 5px 0 var(--tinta);
+}
+.hud-palabras[hidden] {
+  display: none;
+}
+.hud-palabras-lista,
+.final-palabras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.hud-ficha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 12px;
+  background: #fff;
+  border: 4px solid var(--tinta);
+  border-radius: 14px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.hud-ficha-en {
+  font-size: 20px;
+  color: var(--rosa);
+}
+.hud-ficha-es {
+  font-size: 14px;
+  font-weight: 600;
+}
+.hud-brinco {
+  animation: hud-brinco 0.45s;
+}
+@keyframes hud-brinco {
+  0%, 100% { transform: scale(1); }
+  45% { transform: scale(1.2); }
+}
+
+/* ---------- La pantalla del final ---------- */
+.final {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+  color: var(--tinta);
+  font-weight: 800;
+  background:
+    radial-gradient(circle at 30px 30px, rgb(255 255 255 / 0.18) 9px, transparent 10px) 0 0 / 90px 90px,
+    linear-gradient(#ffc06a, var(--rosa));
+  animation: final-aparecer 0.8s ease-out;
+}
+.final-tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: min(92vw, 720px);
+  max-height: 94vh;
+  overflow: auto;
+  padding: 24px 36px;
+  background: var(--papel);
+  border: 6px solid var(--tinta);
+  border-radius: 40px;
+  box-shadow: 0 10px 0 var(--tinta);
+}
+.final-primos {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.final-personaje {
+  height: min(26vh, 190px);
+}
+.final-personaje-volteado {
+  transform: scaleX(-1);
+}
+.final-pozole {
+  height: min(18vh, 130px);
+  animation: hud-brinco 1.6s infinite;
+}
+.final-estrellas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 56px;
+  line-height: 1;
+}
+.final-estrella {
+  width: 72px;
+  height: 72px;
+}
+.final-otra-vez {
+  width: 92px;
+  height: 92px;
+  flex: none;
+  border: 6px solid var(--tinta);
+  border-radius: 50%;
+  background: var(--turquesa);
+  box-shadow: 0 6px 0 var(--tinta);
+  color: #fff;
+  font: inherit;
+  font-size: 54px;
+  line-height: 1;
+  cursor: pointer;
+}
+.final-otra-vez:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 var(--tinta);
+}
+@keyframes final-aparecer {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Pantallas chicas: el tablero se encoge para no tapar el juego. */
+@media (max-width: 700px), (max-height: 480px) {
+  .hud { padding: 8px; }
+  .hud-lista-cosa { width: 32px; height: 32px; }
+  .hud-lista-palomita { width: 18px; height: 18px; }
+  .hud-pastilla, .hud-cuaderno { height: 40px; font-size: 18px; }
+  .hud-pastilla-dibujo { width: 26px; height: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hud, .hud *, .final, .final *, .cargando-logo { animation-duration: 0.01s !important; transition-duration: 0.01s !important; }
+}

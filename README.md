@@ -3,6 +3,10 @@
 Motor de juegos narrativos para el **modo Aventura de [Pardalis](https://gitlab.com/PardalisEdu)**: juegos educativos
 libres para niñas y niños de 1.º a 3.º de primaria que todavía no leen con soltura.
 
+> **Escenario Uno.** El primer escenario real (el mandado para el pozole) está en la carpeta
+> [`escenario-uno/`](escenario-uno/). Usa el motor 3.0 ([`tuysh/engine-game-pardalis`](https://github.com/tuysh/engine-game-pardalis)),
+> no el motor 2.0 de este repositorio. Para jugarlo: `cd escenario-uno && bun install && bun run jugar`.
+
 Un nivel es un barrio que se recorre caminando: tocas a un personaje, conversan, juegas un minijuego, ganas un objeto
 y sigues. Cada nivel se describe con **datos**, no con código:
 

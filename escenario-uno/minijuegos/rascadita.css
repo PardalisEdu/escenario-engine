@@ -1,0 +1,78 @@
+/* Minijuego «Rascadita»: Don Tlacua, el boleto grande con su zona plateada y la tabla de premios.
+   Las medidas usan `cqw`/`cqh` (centésimas del ancho y del alto de la escena) para caber en cualquier pantalla. */
+
+.rascadita-escena {
+  position: absolute; inset: 0; container-type: size; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 3cqw; padding: 2cqh 2cqw 4cqh;
+}
+
+.rascadita-tlacua { height: min(62cqh, 30cqw); width: auto; align-self: flex-end; transform-origin: 50% 100%; }
+.rascadita-tlacua-festeja { animation: rascadita-festeja 0.6s 2; }
+
+/* --- El boleto --- */
+.rascadita-boleto {
+  --rascadita-ancho: min(46cqw, 104cqh);
+  width: var(--rascadita-ancho); padding: calc(var(--rascadita-ancho) * 0.05); rotate: -3deg;
+  display: flex; flex-direction: column; align-items: center; gap: calc(var(--rascadita-ancho) * 0.03);
+  background: #fed449; border: 6px solid var(--mj-tinta); border-radius: 28px; box-shadow: 0 8px 0 var(--mj-tinta);
+  /* Una orilla de puntitos por dentro, como los boletos de feria. */
+  outline: 4px dotted #f58220; outline-offset: -14px;
+}
+/* El listón rosa de arriba, para que las estrellas amarillas resalten sobre el boleto amarillo. */
+.rascadita-adorno {
+  display: flex; align-items: center; gap: calc(var(--rascadita-ancho) * 0.03); padding: 2px calc(var(--rascadita-ancho) * 0.07);
+  background: #e8338b; border: 4px solid var(--mj-tinta); border-radius: 999px;
+}
+.rascadita-adorno-estrella { width: calc(var(--rascadita-ancho) * 0.1); height: calc(var(--rascadita-ancho) * 0.1); }
+.rascadita-adorno-estrella:nth-child(2) { width: calc(var(--rascadita-ancho) * 0.15); height: calc(var(--rascadita-ancho) * 0.15); }
+
+.rascadita-ventana {
+  position: relative; width: 100%; aspect-ratio: 5 / 3; overflow: hidden; display: grid; place-items: center;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 18px;
+}
+.rascadita-ventana-premiada { background: radial-gradient(circle, #fff 30%, #ffe9a6 31% 50%, var(--mj-papel) 51%); }
+.rascadita-premio { width: 60%; height: 80%; object-fit: contain; }
+.rascadita-ventana-premiada .rascadita-premio { animation: mj-brinco 0.6s 2; }
+.rascadita-plata { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; transition: opacity 0.5s; }
+.rascadita-plata-destapada { opacity: 0; pointer-events: none; }
+
+/* --- La tabla de premios --- */
+.rascadita-tabla {
+  --rascadita-celda: min(11cqw, 22cqh);
+  display: grid; grid-template-columns: repeat(2, var(--rascadita-celda)); gap: 8px; padding: 12px;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 24px; box-shadow: 0 6px 0 var(--mj-tinta);
+}
+.rascadita-fila {
+  height: var(--rascadita-celda); display: grid; place-items: center;
+  background: #fff; border: 4px solid var(--mj-tinta); border-radius: 16px;
+}
+.rascadita-fila-dibujo { width: calc(var(--rascadita-celda) * 0.72); height: calc(var(--rascadita-celda) * 0.72); object-fit: contain; }
+.rascadita-fila-mayor { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; gap: 4px; background: #e8338b; }
+.rascadita-fila-mayor .rascadita-fila-dibujo { width: calc(var(--rascadita-celda) * 0.86); height: calc(var(--rascadita-celda) * 0.86); }
+.rascadita-fila-estrella { width: calc(var(--rascadita-celda) * 0.42); height: calc(var(--rascadita-celda) * 0.42); }
+.rascadita-fila-ganada { background: #fed449; animation: mj-brinco 0.6s 3; }
+
+/* --- El confeti --- */
+.rascadita-confeti { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.rascadita-papelito {
+  position: absolute; top: -6cqh; width: 16px; height: 24px; border: 3px solid var(--mj-tinta); border-radius: 5px;
+  animation: rascadita-cae-confeti 2.2s ease-in forwards;
+}
+.rascadita-papelito:nth-child(3n) { width: 20px; height: 20px; border-radius: 50%; }
+
+@keyframes rascadita-cae-confeti {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(115cqh) rotate(540deg); opacity: 0; }
+}
+@keyframes rascadita-festeja { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-10%) rotate(-4deg); } }
+
+/* Pantallas angostas (una tablet de pie): Don Tlacua se queda fuera para que quepan el boleto y la tabla. */
+@media (max-aspect-ratio: 1 / 1) {
+  .rascadita-tlacua { display: none; }
+}
+@media (max-height: 520px) {
+  .rascadita-boleto { border-radius: 20px; outline-offset: -10px; outline-width: 3px; }
+  .rascadita-tabla { padding: 8px; gap: 6px; border-radius: 18px; }
+  .rascadita-papelito { width: 12px; height: 18px; }
+}
