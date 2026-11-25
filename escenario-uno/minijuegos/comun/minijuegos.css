@@ -1,0 +1,129 @@
+/* Estilos que comparten todos los minijuegos. El motor marca el espacio de cada minijuego con el atributo
+   `data-escenario-minijuego`; el marco (comun/marco.ts) le agrega la clase `mj` y la de su tema.
+   Todo sigue el estilo del logo de Pardalis: contorno café grueso, colores planos y esquinas redondas. */
+
+.mj {
+  --mj-tinta: #572d09;
+  --mj-papel: #fff6e0;
+  --mj-fondo: #3aa655;
+  --mj-fondo-claro: #7fd18d;
+  --mj-acento: #fed449;
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  color: var(--mj-tinta);
+  font-family: ui-rounded, 'Nunito', 'Baloo 2', 'Trebuchet MS', system-ui, sans-serif;
+  font-weight: 800;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  /* Fondo de lunares suaves sobre el color del puesto. */
+  background:
+    radial-gradient(circle at 20px 20px, rgb(255 255 255 / 0.16) 7px, transparent 8px) 0 0 / 64px 64px,
+    radial-gradient(circle at 52px 52px, rgb(255 255 255 / 0.1) 5px, transparent 6px) 0 0 / 64px 64px,
+    linear-gradient(var(--mj-fondo-claro), var(--mj-fondo));
+}
+.mj-tema-verde { --mj-fondo: #3aa655; --mj-fondo-claro: #8fd97c; }
+.mj-tema-naranja { --mj-fondo: #f58220; --mj-fondo-claro: #ffc06a; }
+.mj-tema-rojo { --mj-fondo: #e2452f; --mj-fondo-claro: #ff9a7a; }
+.mj-tema-guinda { --mj-fondo: #b3261a; --mj-fondo-claro: #f08a4a; }
+.mj-tema-amarillo { --mj-fondo: #f6b21a; --mj-fondo-claro: #ffe27b; }
+.mj-tema-morado { --mj-fondo: #5a2a80; --mj-fondo-claro: #9a5cc0; }
+.mj-tema-turquesa { --mj-fondo: #17b5b0; --mj-fondo-claro: #8fe3dc; }
+
+.mj * { box-sizing: border-box; }
+.mj img { display: block; pointer-events: none; }
+.mj button { font: inherit; color: inherit; cursor: pointer; padding: 0; }
+.mj button:focus-visible { outline: 5px solid #fff; outline-offset: 3px; }
+
+/* --- La franja de arriba: qué hay que hacer, con dibujos --- */
+.mj-franja { display: flex; justify-content: center; padding: 12px 96px 0; min-height: 76px; }
+.mj-franja-dibujos {
+  display: flex; align-items: center; gap: 10px; padding: 6px 18px;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 999px; box-shadow: 0 5px 0 var(--mj-tinta);
+}
+.mj-franja-dibujo { width: 48px; height: 48px; object-fit: contain; }
+.mj-franja-vacia { visibility: hidden; }
+
+.mj-area { position: relative; min-height: 0; }
+
+.mj-salir {
+  position: absolute; top: 12px; right: 12px; width: 60px; height: 60px; z-index: 5;
+  border: 5px solid var(--mj-tinta); border-radius: 50%; background: var(--mj-papel); box-shadow: 0 5px 0 var(--mj-tinta);
+  font-size: 28px; line-height: 1;
+}
+.mj-salir:active, .mj-boton:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--mj-tinta); }
+
+/* --- Botones redondos con dibujo --- */
+.mj-boton {
+  width: 84px; height: 84px; display: grid; place-items: center;
+  border: 5px solid var(--mj-tinta); border-radius: 50%; background: var(--mj-papel); box-shadow: 0 6px 0 var(--mj-tinta);
+}
+.mj-boton-grande { width: 104px; height: 104px; }
+.mj-boton-dibujo { width: 68%; height: 68%; object-fit: contain; }
+
+/* --- La tarjeta de resultado --- */
+.mj-velo { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: rgb(43 26 12 / 0.55); animation: mj-aparecer 0.25s ease-out; }
+.mj-tarjeta {
+  display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 28px 40px; max-width: min(92%, 640px);
+  background: var(--mj-papel); border: 6px solid var(--mj-tinta); border-radius: 36px; box-shadow: 0 10px 0 var(--mj-tinta);
+  animation: mj-saltar-adentro 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+.mj-estrellas { display: flex; gap: 10px; }
+.mj-estrella { width: 96px; height: 96px; }
+.mj-estrella:nth-child(2) { width: 120px; height: 120px; margin-top: -14px; }
+.mj-estrella-ganada { animation: mj-saltar-adentro 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.mj-cosas { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mj-cosa { width: 76px; height: 76px; object-fit: contain; }
+
+/* --- Pagar con monedas (comun/cobro.ts) --- */
+.mj-cobro { height: 100%; display: grid; grid-template-rows: auto 1fr auto; justify-items: center; align-items: center; gap: 12px; padding: 12px 20px 22px; }
+.mj-cobro-etiqueta { display: flex; align-items: center; gap: 14px; }
+.mj-cobro-compra { width: 110px; height: 110px; object-fit: contain; }
+.mj-precio, .mj-cuenta {
+  min-width: 110px; padding: 4px 20px; text-align: center; font-size: 48px; line-height: 1.2;
+  background: var(--mj-acento); border: 5px solid var(--mj-tinta); border-radius: 22px; box-shadow: 0 5px 0 var(--mj-tinta);
+}
+.mj-precio { transform: rotate(-4deg); }
+.mj-charola {
+  display: flex; align-items: center; gap: 18px; min-width: min(90%, 520px); min-height: 136px; padding: 14px 22px;
+  background: #d99a5b; border: 6px solid var(--mj-tinta); border-radius: 28px; box-shadow: inset 0 8px 0 rgb(0 0 0 / 0.14), 0 6px 0 var(--mj-tinta);
+}
+.mj-charola-monedas { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; min-height: 84px; align-items: center; }
+.mj-cuenta { background: var(--mj-papel); }
+.mj-monedero {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 16px 26px; min-height: 124px; min-width: min(92%, 560px);
+  background: #e8338b; border: 6px solid var(--mj-tinta); border-radius: 28px 28px 60px 60px; box-shadow: 0 6px 0 var(--mj-tinta);
+}
+.mj-moneda { width: 84px; height: 84px; border: 0; background: none; border-radius: 50%; transition: transform 0.12s; }
+.mj-moneda:hover { transform: translateY(-4px) scale(1.05); }
+.mj-moneda-dibujo { width: 100%; height: 100%; filter: drop-shadow(0 4px 0 rgb(87 45 9 / 0.5)); }
+.mj-cobro-pagado .mj-charola { animation: mj-brinco 0.5s; background: #8fd97c; }
+.mj-cobro-pagado .mj-moneda { pointer-events: none; }
+
+/* --- Animaciones --- */
+.mj-brinco { animation: mj-brinco 0.35s; }
+.mj-no-cabe { animation: mj-decir-que-no 0.4s; }
+.mj-temblor { animation: mj-decir-que-no 0.4s; }
+@keyframes mj-aparecer { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mj-saltar-adentro { from { transform: scale(0.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes mj-brinco { 0%, 100% { transform: scale(1); } 45% { transform: scale(1.18); } }
+@keyframes mj-decir-que-no { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-9px) rotate(-5deg); } 75% { transform: translateX(9px) rotate(5deg); } }
+
+/* Quien pidió menos movimiento en su dispositivo ve los cambios sin brincos. */
+@media (prefers-reduced-motion: reduce) {
+  .mj *, .mj { animation-duration: 0.01s !important; transition-duration: 0.01s !important; }
+}
+
+/* Pantallas bajitas (un teléfono acostado): todo un poco más chico. */
+@media (max-height: 520px) {
+  .mj-franja { min-height: 60px; padding-top: 6px; }
+  .mj-franja-dibujo { width: 36px; height: 36px; }
+  .mj-estrella { width: 64px; height: 64px; }
+  .mj-estrella:nth-child(2) { width: 80px; height: 80px; }
+  .mj-cobro-compra { width: 70px; height: 70px; }
+  .mj-moneda { width: 64px; height: 64px; }
+  .mj-charola { min-height: 96px; }
+  .mj-monedero { min-height: 92px; padding: 10px 18px; }
+}

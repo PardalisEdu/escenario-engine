@@ -1,0 +1,444 @@
+{
+  "meta": {
+    "id": "mercado",
+    "titulo": "El mercado",
+    "personajes": {
+      "pardi": { "idioma": "es", "sprite": "spr_pardi" },
+      "bobby": { "idioma": "en", "sprite": "spr_bobby" },
+      "tepo": { "idioma": "es", "sprite": "spr_tepo" },
+      "axo": { "idioma": "es", "sprite": "spr_axo" },
+      "armando": { "idioma": "es", "sprite": "spr_armando" },
+      "tlacua": { "idioma": "es", "sprite": "spr_tlacua" },
+      "guajo": { "idioma": "es", "sprite": "spr_guajo" },
+      "xolo": { "idioma": "es", "sprite": "spr_xolo" },
+      "lula": { "idioma": "es", "sprite": "spr_lula" },
+      "igu": { "idioma": "es", "sprite": "spr_igu" },
+      "coli": { "idioma": "es", "sprite": "spr_coli" }
+    }
+  },
+  "jugador": { "personaje": "pardi", "velocidad": 3 },
+  "mundo": {
+    "camara": { "distancia": 9.5, "altura": 3.6, "giro": 0 },
+    "sonidos": { "musica": "mus_mercado" },
+    "planos": {
+      "plano_llegada": { "mira": "vista_mercado", "distancia": 13, "altura": 4.6, "giro": -16 },
+      "plano_primos": { "mira": "entrada", "distancia": 6, "altura": 2.4, "giro": 8 },
+      "plano_tepo": { "mira": "tepo", "distancia": 6.4, "altura": 2.6, "giro": 8 },
+      "plano_axo": { "mira": "axo", "distancia": 6.4, "altura": 2.6, "giro": -8 },
+      "plano_armando": { "mira": "armando", "distancia": 6.4, "altura": 2.6, "giro": 8 },
+      "plano_tlacua": { "mira": "tlacua", "distancia": 6.2, "altura": 2.6, "giro": -8 },
+      "plano_guajo": { "mira": "guajo", "distancia": 6.4, "altura": 2.6, "giro": 8 },
+      "plano_lula": { "mira": "lula", "distancia": 6.4, "altura": 2.6, "giro": -8 },
+      "plano_igu": { "mira": "igu", "distancia": 6.4, "altura": 2.6, "giro": 8 },
+      "plano_coli": { "mira": "coli", "distancia": 6, "altura": 2.4, "giro": -8 },
+      "plano_pinatas": { "mira": "frente_pinatas", "distancia": 7.5, "altura": 2.8, "giro": 6 },
+      "plano_salida": { "mira": "junto_a_la_salida", "distancia": 7, "altura": 3, "giro": 14 }
+    }
+  },
+  "estado": {
+    "objetivos": ["verduras", "tostadas", "maiz", "chiles"],
+    "variables": ["botana", "premio", "fortuna", "flor", "cancion", "estrellas"],
+    "lista": {
+      "verduras": "las verduras",
+      "tostadas": "las tostadas",
+      "maiz": "el maíz",
+      "chiles": "los chiles"
+    },
+    "dinero": 100
+  },
+  "secuencias": {
+    "otro_dia": [
+      { "dice": "pardi", "texto": "Ahorita volvemos. ¡Gracias!", "audio": "vo_pardi_ahorita" }
+    ],
+    "revisa_la_lista": [
+      {
+        "cuando": "objetivosCompletos",
+        "dice": [
+          { "anima": "pardi", "con": "pardi_feliz", "repite": true },
+          { "dice": "pardi", "texto": "¡Ya tenemos todo lo de la lista! Vamos a casa.", "audio": "vo_pardi_todo" },
+          { "anima": "pardi", "con": "spr_pardi", "repite": true },
+          { "dice": "bobby", "texto": "Let's go home!", "trad": "¡Vamos a casa!", "en": "home", "es": "casa", "audio": "vo_bobby_home" },
+          { "camara": "plano_salida", "duracion": 1.6 },
+          { "espera": 1.2 }
+        ]
+      },
+      {
+        "cuando": "no objetivosCompletos",
+        "dice": [
+          { "dice": "pardi", "texto": "Muy bien. Todavía nos faltan {faltan}.", "audio": "vo_pardi_faltan" }
+        ]
+      }
+    ],
+    "salida_bloqueada": [
+      { "dice": "pardi", "texto": "Todavía no podemos irnos. Nos faltan {faltan}.", "audio": "vo_pardi_no_irnos" }
+    ]
+  },
+  "npcs": {
+    "bobby": {
+      "dialogo": [
+        {
+          "cuando": "objetivosCompletos",
+          "dice": [
+            { "dice": "bobby", "texto": "Let's go home!", "trad": "¡Vamos a casa!", "audio": "vo_bobby_home" }
+          ]
+        },
+        {
+          "dice": [
+            { "dice": "bobby", "texto": "I like the market!", "trad": "¡Me gusta el mercado!", "audio": "vo_bobby_like" },
+            { "dice": "pardi", "texto": "Nos faltan {faltan}. ¡Vamos!", "audio": "vo_pardi_faltan_2" }
+          ]
+        }
+      ]
+    },
+    "tepo": {
+      "dialogo": [
+        {
+          "cuando": "tengo verduras",
+          "dice": [
+            { "dice": "tepo", "texto": "¡Que les quede muy rico el pozole!", "audio": "vo_tepo_rico" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_verduras" }, { "camina": "primo_verduras", "quien": "bobby" }, { "camara": "plano_tepo", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "tepo" },
+            { "dice": "tepo", "texto": "¡Pásale, marchantito! ¿Qué vas a llevar?", "audio": "vo_tepo_pasale" },
+            { "dice": "pardi", "texto": "Buenos días, doña Tepo. Lechuga, rábanos, cebolla, orégano y limón.", "audio": "vo_pardi_verduras" },
+            { "anima": "bobby", "con": "bobby_duda", "repite": true },
+            { "dice": "bobby", "texto": "Lettuce?", "trad": "¿Lechuga?", "en": "lettuce", "es": "lechuga", "audio": "vo_bobby_lettuce" },
+            { "anima": "bobby", "con": "spr_bobby", "repite": true },
+            { "dice": "pardi", "texto": "¿Létus? ¡Ah, así se dice lechuga! Sí, Bobby: lechuga.", "audio": "vo_pardi_lettuce" },
+            { "dice": "tepo", "texto": "Escoge lo que dice tu lista, y fíjate bien en el cambio.", "audio": "vo_tepo_escoge" },
+            { "juego": "Verduleria", "config": { "precio": 35, "pagaCon": 50 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "confeti" },
+          { "dice": "tepo", "texto": "¡Todo fresquecito! Y tu cambio, bien contado.", "audio": "vo_tepo_cambio" },
+          { "dice": "bobby", "texto": "Thank you!", "trad": "¡Gracias!", "en": "thank you", "es": "gracias", "audio": "vo_bobby_thanks" },
+          { "secuencia": "revisa_la_lista" }
+        ],
+        "siNo": [
+          { "dice": "tepo", "texto": "No hay prisa, mi niño. Aquí te espero.", "audio": "vo_tepo_espero" }
+        ]
+      }
+    },
+    "armando": {
+      "dialogo": [
+        {
+          "cuando": "tengo tostadas",
+          "dice": [
+            { "dice": "armando", "texto": "¡Cuídalas en el camino, que no se rompan!", "audio": "vo_armando_cuidalas" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_tostadas" }, { "camina": "primo_tostadas", "quien": "bobby" }, { "camara": "plano_armando", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "armando" },
+            { "dice": "armando", "texto": "¡Tostadas doraditas! Recién salidas del comal.", "audio": "vo_armando_tostadas" },
+            { "dice": "bobby", "texto": "Crunchy!", "trad": "¡Crujientes!", "en": "crunchy", "es": "crujiente", "audio": "vo_bobby_crunchy" },
+            { "dice": "pardi", "texto": "¡Cronchi! Sí, truenan: ¡cronch, cronch!", "audio": "vo_pardi_cronchi" },
+            { "dice": "armando", "texto": "Busca las que no estén rotas. Y sácalas despacito, con mucho cuidado.", "audio": "vo_armando_cuidado" },
+            { "juego": "Tostadas", "config": { "precio": 15 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "magia" },
+          { "dice": "armando", "texto": "¡Eso! Enteritas. Tienes manos de cirujano.", "audio": "vo_armando_bien" },
+          { "secuencia": "revisa_la_lista" }
+        ],
+        "siNo": [
+          { "dice": "armando", "texto": "Tranquilo, hay muchas tostadas. Vuelve cuando quieras.", "audio": "vo_armando_vuelve" }
+        ]
+      }
+    },
+    "guajo": {
+      "dialogo": [
+        {
+          "cuando": "tengo maiz",
+          "dice": [
+            { "dice": "guajo", "texto": "¡Glu, glu! ¡Qué buen pulso tienes para el balero!", "audio": "vo_guajo_pulso" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_maiz" }, { "camina": "primo_maiz", "quien": "bobby" }, { "camara": "plano_guajo", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "guajo" },
+            { "dice": "pardi", "texto": "Don Guajo, ¿tiene maíz para pozole?", "audio": "vo_pardi_maiz" },
+            { "dice": "bobby", "texto": "Corn!", "trad": "¡Maíz!", "en": "corn", "es": "maíz", "audio": "vo_bobby_corn" },
+            { "anima": "guajo", "con": "guajo_habla", "repite": true },
+            { "dice": "guajo", "texto": "¡Glu, glu, glu! Claro que tengo. Y hoy te lo regalo...", "audio": "vo_guajo_regalo" },
+            { "dice": "guajo", "texto": "...¡si me ganas al balero! Tienes que ensartarlo cinco veces.", "audio": "vo_guajo_reto" },
+            { "anima": "guajo", "con": "spr_guajo", "repite": true },
+            { "dice": "bobby", "texto": "A game! Five times!", "trad": "¡Un juego! ¡Cinco veces!", "en": "five", "es": "cinco", "audio": "vo_bobby_five" },
+            { "juego": "Balero", "config": { "aciertos": 5 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "confeti" },
+          { "dice": "guajo", "texto": "¡Glu, glu! ¡Me ganaste! El maíz es tuyo, campeón.", "audio": "vo_guajo_ganaste" },
+          { "dice": "bobby", "texto": "You did it!", "trad": "¡Lo lograste!", "audio": "vo_bobby_did_it" },
+          { "secuencia": "revisa_la_lista" }
+        ],
+        "siNo": [
+          { "dice": "guajo", "texto": "El balero no se va a ningún lado. ¡Aquí te espero para la revancha!", "audio": "vo_guajo_revancha" }
+        ]
+      }
+    },
+    "igu": {
+      "dialogo": [
+        {
+          "cuando": "tengo chiles",
+          "dice": [
+            { "dice": "igu", "texto": "¡Salud! Digo... ¡que les quede bien rojo el pozole!", "audio": "vo_igu_salud" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_chiles" }, { "camina": "primo_chiles", "quien": "bobby" }, { "camara": "plano_igu", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "igu" },
+            { "dice": "igu", "texto": "Buenos días, mis niños. Aquí todo es con calma, sin prisas.", "audio": "vo_igu_calma" },
+            { "dice": "pardi", "texto": "Queremos chiles guajillo y chiles ancho, por favor.", "audio": "vo_pardi_chiles" },
+            { "dice": "bobby", "texto": "Are they hot?", "trad": "¿Pican?", "en": "hot", "es": "picante", "audio": "vo_bobby_hot" },
+            { "dice": "igu", "texto": "El guajillo es largo y rojo. El ancho es gordito y oscuro. Huelen tan rico que... a... a...", "audio": "vo_igu_huelen" },
+            { "sonido": "sfx_achu" },
+            { "dice": "igu", "texto": "¡¡ACHÚ!! ¡Ay, mis chiles! ¡Salieron volando! ¡Atrápenlos con la canasta!", "audio": "vo_igu_achu" },
+            { "juego": "Chiles", "config": { "precio": 20 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "magia" },
+          { "dice": "igu", "texto": "¡Qué rápidos! Gracias por atraparlos. Aquí están sus chiles.", "audio": "vo_igu_gracias" },
+          { "secuencia": "revisa_la_lista" }
+        ],
+        "siNo": [
+          { "dice": "igu", "texto": "No pasa nada, yo los junto con calma. Vuelvan al ratito.", "audio": "vo_igu_ratito" }
+        ]
+      }
+    },
+    "axo": {
+      "dialogo": [
+        {
+          "cuando": "tengo botana",
+          "dice": [
+            { "dice": "axo", "texto": "¿Verdad que estuvo rico? ¡Vuelvan pronto!", "audio": "vo_axo_vuelvan" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_aguas" }, { "camina": "primo_aguas", "quien": "bobby" }, { "camara": "plano_axo", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "axo" },
+            { "dice": "axo", "texto": "¡Aguas frescas, helado y fruta con chilito! Todo a diez pesos.", "audio": "vo_axo_pregon" },
+            {
+              "elige": "¿Qué se te antoja?",
+              "opciones": [
+                {
+                  "texto": "Agua",
+                  "trad": "water",
+                  "imagen": "item_agua_jamaica",
+                  "audio": "vo_opcion_agua",
+                  "secuencia": [
+                    { "dice": "bobby", "texto": "Water!", "trad": "¡Agua!", "en": "water", "es": "agua", "audio": "vo_bobby_water" },
+                    { "juego": "Cobro", "config": { "precio": 10, "compra": "item_agua_jamaica", "otorgar": { "botana": "agua" } } }
+                  ]
+                },
+                {
+                  "texto": "Helado",
+                  "trad": "ice cream",
+                  "imagen": "item_helado",
+                  "audio": "vo_opcion_helado",
+                  "secuencia": [
+                    { "dice": "bobby", "texto": "Ice cream!", "trad": "¡Helado!", "en": "ice cream", "es": "helado", "audio": "vo_bobby_ice_cream" },
+                    { "juego": "Cobro", "config": { "precio": 10, "compra": "item_helado", "otorgar": { "botana": "helado" } } }
+                  ]
+                },
+                {
+                  "texto": "Fruta",
+                  "trad": "fruit",
+                  "imagen": "item_fruta",
+                  "audio": "vo_opcion_fruta",
+                  "secuencia": [
+                    { "dice": "bobby", "texto": "Fruit!", "trad": "¡Fruta!", "en": "fruit", "es": "fruta", "audio": "vo_bobby_fruit" },
+                    { "juego": "Cobro", "config": { "precio": 10, "compra": "item_fruta", "otorgar": { "botana": "fruta" } } }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "magia" },
+          { "dice": "axo", "texto": "¡Provecho! Uno para ti y uno para tu primo.", "audio": "vo_axo_provecho" },
+          { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+          { "dice": "bobby", "texto": "Yummy!", "trad": "¡Qué rico!", "en": "yummy", "es": "rico", "audio": "vo_bobby_yummy" },
+          { "anima": "bobby", "con": "spr_bobby", "repite": true }
+        ],
+        "siNo": [
+          { "dice": "axo", "texto": "Si se les antoja al rato, aquí estoy.", "audio": "vo_axo_al_rato" }
+        ]
+      }
+    },
+    "tlacua": {
+      "dialogo": [
+        {
+          "cuando": "tengo premio",
+          "dice": [
+            { "dice": "tlacua", "texto": "¡Ya tienes tu premio! Disfrútalo mucho.", "audio": "vo_tlacua_disfruta" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_rascaditas" }, { "camina": "primo_rascaditas", "quien": "bobby" }, { "camara": "plano_tlacua", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "tlacua" },
+            { "dice": "tlacua", "texto": "¡Rásquele, rásquele! Con la rascadita siempre ganas un premio. Cuesta cinco pesos.", "audio": "vo_tlacua_pregon" },
+            { "dice": "tlacua", "texto": "El premio mayor es... ¡el mini pizarrón!", "audio": "vo_tlacua_mayor" },
+            { "dice": "bobby", "texto": "A prize!", "trad": "¡Un premio!", "en": "prize", "es": "premio", "audio": "vo_bobby_prize" },
+            { "juego": "Rascadita", "config": { "precio": 5 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "confeti" },
+          { "anima": "pardi", "con": "pardi_feliz", "repite": true },
+          { "dice": "tlacua", "texto": "¡Felicidades! Aquí siempre se gana.", "audio": "vo_tlacua_felicidades" },
+          { "anima": "pardi", "con": "spr_pardi", "repite": true }
+        ],
+        "siNo": [
+          { "dice": "tlacua", "texto": "¡Aquí va a estar tu rascadita cuando quieras!", "audio": "vo_tlacua_cuando_quieras" }
+        ]
+      }
+    },
+    "lula": {
+      "dialogo": [
+        {
+          "cuando": "tengo fortuna",
+          "dice": [
+            { "anima": "lula", "con": "lula_ve", "repite": true },
+            { "dice": "lula", "texto": "Las cartas ya hablaron: te espera un día maravilloso.", "audio": "vo_lula_maravilloso" },
+            { "anima": "lula", "con": "spr_lula", "repite": true }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_vidente" }, { "camina": "primo_vidente", "quien": "bobby" }, { "camara": "plano_lula", "duracion": 1 }] },
+            { "mira": "bobby", "hacia": "lula" },
+            { "anima": "lula", "con": "lula_ve", "repite": true },
+            { "dice": "lula", "texto": "Uuuh, uuuh... Yo soy Madame Lula. Mis cartas ven el futuro.", "audio": "vo_lula_soy" },
+            { "anima": "lula", "con": "spr_lula", "repite": true },
+            { "dice": "lula", "texto": "Por cinco pesos, escoge una carta y te digo qué te espera.", "audio": "vo_lula_cinco" },
+            { "dice": "bobby", "texto": "Good luck!", "trad": "¡Buena suerte!", "en": "luck", "es": "suerte", "audio": "vo_bobby_luck" },
+            { "juego": "Cartas", "config": { "precio": 5 } }
+          ]
+        }
+      ],
+      "alVolver": {
+        "siLogrado": [
+          { "efecto": "magia" },
+          { "dice": "lula", "texto": "Las cartas nunca se equivocan. ¡Vayan con alegría!", "audio": "vo_lula_alegria" }
+        ],
+        "siNo": [
+          { "dice": "lula", "texto": "Las cartas saben esperar. Uuuh, uuuh.", "audio": "vo_lula_esperar" }
+        ]
+      }
+    },
+    "coli": {
+      "dialogo": [
+        {
+          "cuando": "tengo flor",
+          "dice": [
+            { "dice": "coli", "texto": "¡Bzzz! A tu mamá le va a encantar esa flor.", "audio": "vo_coli_encantar" }
+          ]
+        },
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_flores" }, { "camina": "primo_flores", "quien": "bobby" }, { "camara": "plano_coli", "duracion": 1 }] },
+            { "dice": "coli", "texto": "¡Bzzz, bzzz! ¡Flores, flores! Huelan esta, qué bonita.", "audio": "vo_coli_flores" },
+            { "dice": "bobby", "texto": "A flower!", "trad": "¡Una flor!", "en": "flower", "es": "flor", "audio": "vo_bobby_flower" },
+            { "dice": "coli", "texto": "Llévenle una a su mamá. ¡Se la regalo!", "audio": "vo_coli_regalo" },
+            { "pon": { "flor": true } },
+            { "efecto": "magia" },
+            { "dice": "pardi", "texto": "¡Muchas gracias, Coli!", "audio": "vo_pardi_gracias_coli" }
+          ]
+        }
+      ]
+    },
+    "xolo": {
+      "dialogo": [
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_xolo" }, { "camina": "primo_xolo", "quien": "bobby" }] },
+            { "dice": "xolo", "texto": "¡Auuu! ¿Les canto una canción, chamacos?", "audio": "vo_xolo_canto" },
+            { "dice": "bobby", "texto": "Music!", "trad": "¡Música!", "en": "music", "es": "música", "audio": "vo_bobby_music" },
+            { "musica": "mus_fiesta" },
+            { "pon": { "cancion": true } },
+            { "efecto": "magia" },
+            { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+            { "dice": "xolo", "texto": "¡Auuu, auuu! ¡Esta va para el primo que vino de lejos!", "audio": "vo_xolo_primo" },
+            { "anima": "bobby", "con": "spr_bobby", "repite": true }
+          ]
+        }
+      ]
+    }
+  },
+  "interactivos": {
+    "pinatas": {
+      "dialogo": [
+        {
+          "dice": [
+            { "juntos": [{ "camina": "frente_pinatas" }, { "camina": "primo_pinatas", "quien": "bobby" }, { "camara": "plano_pinatas", "duracion": 1 }] },
+            { "dice": "pardi", "texto": "¡Mira, Bobby! ¡Piñatas!", "audio": "vo_pardi_pinatas" },
+            { "dice": "bobby", "texto": "A star!", "trad": "¡Una estrella!", "en": "star", "es": "estrella", "audio": "vo_bobby_star" },
+            { "efecto": "confeti" },
+            { "dice": "pardi", "texto": "¡Sí, es una estrella! Se rompe con un palo y caen dulces.", "audio": "vo_pardi_estrella" }
+          ]
+        }
+      ]
+    }
+  },
+  "comentarios": {
+    "paseo": [
+      { "dice": "pardi", "texto": "¡Cuántos colores hay en el mercado!", "audio": "vo_pardi_colores" },
+      { "dice": "pardi", "texto": "Me gusta venir al mercado.", "audio": "vo_pardi_me_gusta" }
+    ],
+    "antojo": [
+      { "dice": "pardi", "texto": "Mmm, ¡qué rico huele!", "audio": "vo_pardi_huele" },
+      { "dice": "pardi", "texto": "¡Mira, están jugando al avioncito!", "audio": "vo_pardi_avioncito" }
+    ]
+  },
+  "cinematicas": {
+    "llegada": {
+      "inicia": "alEntrar",
+      "pasos": [
+        { "camara": "plano_llegada" },
+        { "fundido": "abrir", "duracion": 1.2 },
+        { "espera": 1.5 },
+        { "camara": "plano_primos", "duracion": 2.4 },
+        { "mira": "pardi", "hacia": "bobby" },
+        { "dice": "pardi", "texto": "¡Mira, Bobby! Este es el mercado de mi barrio.", "audio": "vo_pardi_mercado" },
+        { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+        { "dice": "bobby", "texto": "Wow! The market!", "trad": "¡Guau! ¡El mercado!", "en": "market", "es": "mercado", "audio": "vo_bobby_market" },
+        { "anima": "bobby", "con": "spr_bobby", "repite": true },
+        { "dice": "pardi", "texto": "¿Márket? ¡Ah, mercado! Ya le estoy entendiendo.", "audio": "vo_pardi_market" },
+        { "dice": "pardi", "texto": "Mamá nos dio cien pesos y la lista. ¡Vamos por todo para el pozole!", "audio": "vo_pardi_cien" },
+        { "camara": "jugador", "duracion": 1.2 }
+      ]
+    }
+  },
+  "salida": {
+    "destino": "comedor",
+    "requiere": "objetivosCompletos",
+    "siBloqueada": "salida_bloqueada",
+    "flecha": { "visibleCuando": "objetivosCompletos" }
+  }
+}

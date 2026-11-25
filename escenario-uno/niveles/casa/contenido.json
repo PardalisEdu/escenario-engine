@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "id": "casa",
+    "titulo": "La casa de Pardi",
+    "personajes": {
+      "pardi": { "idioma": "es", "sprite": "spr_pardi" },
+      "mama": { "idioma": "es", "sprite": "spr_mama" },
+      "bobby": { "idioma": "en", "sprite": "spr_bobby" }
+    }
+  },
+  "mundo": {
+    "camara": { "distancia": 10, "altura": 3.6, "giro": 0 },
+    "planos": {
+      "plano_tele": { "mira": "frente_tele", "distancia": 6, "altura": 2.4, "giro": 14 },
+      "plano_sala": { "mira": "centro_sala", "distancia": 9.5, "altura": 3.4, "giro": 0 },
+      "plano_puerta": { "mira": "bobby_entra", "distancia": 7, "altura": 2.6, "giro": -10 },
+      "plano_pardi": { "mira": "pardi", "distancia": 4.6, "altura": 2, "giro": 8 },
+      "plano_bobby": { "mira": "bobby", "distancia": 5, "altura": 2.1, "giro": -8 },
+      "plano_mama": { "mira": "mama", "distancia": 5.4, "altura": 2.4, "giro": -6 }
+    }
+  },
+  "cinematicas": {
+    "intro": {
+      "inicia": "alEntrar",
+      "pasos": [
+        { "camara": "plano_tele" },
+        { "anima": "pardi", "con": "pardi_tele", "repite": true },
+        { "fundido": "abrir", "duracion": 1.2 },
+        { "espera": 1.5 },
+        { "dice": "pardi", "texto": "¡Ja, ja, ja! ¡Ya empezaron mis caricaturas!", "audio": "vo_pardi_caricaturas" },
+        {
+          "juntos": [
+            { "aparece": "mama", "en": "puerta" },
+            { "sonido": "sfx_puerta" },
+            { "camara": "plano_sala", "duracion": 1.5 }
+          ]
+        },
+        { "camina": "mama_sala", "quien": "mama" },
+        { "mira": "mama", "hacia": "pardi" },
+        { "dice": "mama", "texto": "¡Pardi! Mira quién llegó.", "audio": "vo_mama_mira" },
+        {
+          "juntos": [
+            { "aparece": "bobby", "en": "puerta" },
+            { "camara": "plano_puerta", "duracion": 1.2 }
+          ]
+        },
+        { "camina": "bobby_entra", "quien": "bobby" },
+        { "mira": "bobby", "hacia": "pardi" },
+        { "dice": "mama", "texto": "Es tu primo Bobby. Viene de Estados Unidos a conocer México.", "audio": "vo_mama_primo" },
+        { "anima": "bobby", "con": "bobby_saluda" },
+        {
+          "dice": "bobby",
+          "texto": "Hello! I'm Bobby!",
+          "trad": "¡Hola! Soy Bobby.",
+          "en": "hello",
+          "es": "hola",
+          "audio": "vo_bobby_hello"
+        },
+
+        { "camara": "plano_pardi", "duracion": 0.8 },
+        { "mira": "pardi", "hacia": "mama" },
+        { "anima": "pardi", "con": "pardi_sorpresa", "repite": true },
+        { "dice": "pardi", "texto": "¿Qué? ¿Ahorita? ¡Si están pasando las caricaturas buenas!", "audio": "vo_pardi_duda_1" },
+        { "anima": "pardi", "con": "pardi_duda", "repite": true },
+        { "dice": "pardi", "texto": "¿Tengo un primo de Estados Unidos? ¡Nadie me había dicho!", "audio": "vo_pardi_duda_2" },
+        { "dice": "pardi", "texto": "¿Me habrá traído algo?", "audio": "vo_pardi_duda_3" },
+        { "anima": "pardi", "con": "pardi_sorpresa", "repite": true },
+        { "dice": "pardi", "texto": "¿Y cómo le voy a hablar? ¡¿Yo sé inglés?!", "audio": "vo_pardi_duda_4" },
+
+        { "anima": "pardi", "con": "spr_pardi", "repite": true },
+        { "juntos": [
+            { "camara": "plano_sala", "duracion": 1 },
+            { "camina": "pardi_de_pie", "quien": "pardi" },
+            { "camina": "bobby_sala", "quien": "bobby" }
+          ]
+        },
+        { "mira": "pardi", "hacia": "bobby" },
+        { "mira": "bobby", "hacia": "pardi" },
+        { "dice": "pardi", "texto": "Eh... ¡hola, Bobby!", "audio": "vo_pardi_hola" },
+
+        { "camara": "plano_mama", "duracion": 0.8 },
+        { "anima": "mama", "con": "mama_lista", "repite": true },
+        { "dice": "mama", "texto": "Hoy vamos a hacer pozole. Vayan los dos al mercado por el mandado.", "audio": "vo_mama_mandado" },
+        { "dice": "mama", "texto": "Así Bobby conoce el barrio. Aquí está la lista:", "audio": "vo_mama_lista" },
+        { "dice": "mama", "texto": "Maíz, cebolla, chiles, lechuga, rábanos, orégano, limón y tostadas.", "audio": "vo_mama_lista_2" },
+        { "camara": "plano_pardi", "duracion": 0.8 },
+        { "anima": "pardi", "con": "pardi_sorpresa", "repite": true },
+        { "dice": "pardi", "texto": "¡Esa lista es interminable!", "audio": "vo_pardi_interminable" },
+        { "camara": "plano_bobby", "duracion": 0.8 },
+        { "anima": "bobby", "con": "bobby_feliz", "repite": true },
+        {
+          "dice": "bobby",
+          "texto": "Let's go!",
+          "trad": "¡Vamos!",
+          "en": "let's go",
+          "es": "vamos",
+          "audio": "vo_bobby_lets_go"
+        },
+        { "anima": "bobby", "con": "spr_bobby", "repite": true },
+        { "anima": "pardi", "con": "pardi_bolsa", "repite": true },
+        { "camara": "plano_sala", "duracion": 1 },
+        { "dice": "pardi", "texto": "Bueno... ¡vamos!", "audio": "vo_pardi_vamos" },
+        {
+          "juntos": [
+            { "camina": "puerta", "quien": "pardi" },
+            { "camina": "bobby_entra", "quien": "bobby" },
+            { "fundido": "cerrar", "duracion": 1.4 }
+          ]
+        },
+        { "sale": "mercado" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+/* Minijuego «Chiles»: la lluvia de chiles, la canasta, los contadores y Doña Igu.
+   Las medidas usan `cqh` (centésimas del alto de la escena) para que todo se achique junto en un teléfono. */
+
+.chiles-escena {
+  position: absolute; inset: 0; display: grid; grid-template-columns: auto 1fr;
+  container-type: size; touch-action: none; /* el dedo arrastra la canasta, no la página */
+}
+
+/* El piso de madera del puesto, a todo lo ancho. */
+.chiles-piso {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 9cqh;
+  background: #b9783f; border-top: 6px solid var(--mj-tinta); box-shadow: inset 0 8px 0 #d99a5b;
+}
+
+.chiles-igu { position: relative; align-self: end; height: 50cqh; width: auto; margin: 0 1cqw 3cqh 2cqw; transform-origin: 50% 100%; }
+.chiles-igu-feliz { animation: chiles-igu-feliz 0.5s; }
+.chiles-igu-susto { animation: chiles-igu-susto 0.5s; }
+
+/* El cielo: donde vuelan las cosas y se mueve la canasta. */
+/* Se recorta para que las cosas entren cayendo por arriba sin tapar los contadores. */
+.chiles-cielo { position: relative; min-width: 0; container-type: size; overflow: hidden; }
+
+/* Los contadores ocupan el lugar de la franja de arriba (que este minijuego deja vacía): por eso suben
+   fuera de la escena lo que mide la franja. Así el cielo queda completo para jugar. */
+.chiles-contadores { position: absolute; top: -68px; left: 0; right: 0; z-index: 3; display: flex; justify-content: center; gap: 14px; }
+.chiles-contador {
+  display: flex; align-items: center; gap: 6px; padding: 4px 14px 4px 8px;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 999px; box-shadow: 0 5px 0 var(--mj-tinta);
+}
+.chiles-contador-completo { background: #c9f0b4; }
+.chiles-contador-dibujo { width: 52px; height: 52px; }
+.chiles-marca { width: 26px; height: 26px; border: 4px solid var(--mj-tinta); border-radius: 50%; background: #ead9b5; }
+.chiles-contador-guajillo .chiles-marca-llena { background: #e2452f; animation: mj-saltar-adentro 0.35s; }
+.chiles-contador-ancho .chiles-marca-llena { background: #6b2418; animation: mj-saltar-adentro 0.35s; }
+
+/* Cada cosa que cae: su `left` y `top` (el centro) los pone el juego. */
+.chiles-cosa { position: absolute; z-index: 1; width: max(56px, 17cqh); height: max(56px, 17cqh); translate: -50% -50%; }
+.chiles-cosa-dibujo { width: 100%; height: 100%; filter: drop-shadow(0 4px 0 rgb(87 45 9 / 0.35)); }
+.chiles-cosa-atrapada { animation: chiles-atrapada 0.25s ease-in forwards; }
+.chiles-cosa-rebota { animation: chiles-rebota 0.7s ease-out forwards; }
+.chiles-cosa-se-va { animation: chiles-se-va 0.3s ease-out forwards; }
+
+.chiles-canasta { position: absolute; z-index: 2; left: 50%; bottom: 4cqh; height: max(60px, 22cqh); aspect-ratio: 8 / 5; translate: -50% 0; transform-origin: 50% 100%; }
+.chiles-canasta-brinca { animation: chiles-canasta-brinca 0.3s; }
+
+@keyframes chiles-atrapada { to { transform: translateY(40%) scale(0.3); opacity: 0; } }
+@keyframes chiles-rebota {
+  0% { transform: translate(0, 0) rotate(0); }
+  50% { transform: translate(60%, -160%) rotate(200deg); opacity: 1; }
+  100% { transform: translate(130%, -60%) rotate(420deg) scale(0.6); opacity: 0; }
+}
+@keyframes chiles-se-va { to { transform: scale(1.3, 0.4) translateY(40%); opacity: 0; } }
+@keyframes chiles-canasta-brinca { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.12, 0.86); } 70% { transform: scale(0.95, 1.06); } }
+@keyframes chiles-igu-feliz { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-9%) rotate(4deg); } }
+@keyframes chiles-igu-susto { 0%, 100% { transform: scale(1); } 30% { transform: scale(1.06, 0.92); } 60% { transform: scale(0.96, 1.05); } }
+
+/* Pantallas bajitas (un teléfono acostado): contadores más chicos. */
+@media (max-height: 520px) {
+  .chiles-contadores { top: -56px; gap: 8px; }
+  .chiles-contador { padding: 2px 10px 2px 6px; gap: 4px; border-width: 4px; }
+  .chiles-contador-dibujo { width: 34px; height: 34px; }
+  .chiles-marca { width: 18px; height: 18px; border-width: 3px; }
+}
+/* Pantallas angostas: Doña Igu se hace chiquita para dejarle el cielo a la canasta. */
+@media (max-width: 620px) {
+  .chiles-igu { height: 30cqh; }
+}

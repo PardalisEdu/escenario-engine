@@ -1,0 +1,177 @@
+/* Estilos del minijuego «verduleria». Los compartidos están en comun/minijuegos.css.
+   El puesto se arma por capas, de atrás hacia adelante: huacales y Doña Tepo, la mesa con su mantel, y el toldo.
+   Los tamaños se miden con el alto de la pantalla (vh) para que quepa igual en una tablet que en un teléfono acostado. */
+
+.verduleria-puesto {
+  --verduleria-alto-de-la-mesa: 69%;
+  --verduleria-alto-del-toldo: clamp(26px, 6vh, 44px);
+  --verduleria-alto-de-tepo: clamp(124px, 32vh, 250px);
+  position: absolute; inset: 0; overflow: hidden;
+}
+
+/* --- El toldo de rayas con ondas, hecho con un dibujo SVG que se repite --- */
+.verduleria-toldo {
+  position: absolute; top: 0; left: 0; right: 0; height: var(--verduleria-alto-del-toldo); z-index: 3;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 44'%3E%3Cpath d='M0 -6H48V24a24 17 0 0 1-48 0Z' fill='%23e2452f' stroke='%23572d09' stroke-width='5'/%3E%3Cpath d='M48 -6H96V24a24 17 0 0 1-48 0Z' fill='%23fff6e0' stroke='%23572d09' stroke-width='5'/%3E%3C/svg%3E") repeat-x top center;
+  background-size: auto 100%;
+  pointer-events: none;
+}
+
+/* --- Los huacales del fondo, con algo asomándose --- */
+.verduleria-huacal {
+  position: absolute; bottom: calc(var(--verduleria-alto-de-la-mesa) - 10px); left: 6%; z-index: 1;
+  width: clamp(84px, 20vh, 150px); height: clamp(52px, 12vh, 92px);
+  border: 5px solid var(--mj-tinta); border-radius: 12px;
+  background: repeating-linear-gradient(#d99a5b 0 16px, #572d09 16px 20px);
+}
+.verduleria-huacal + .verduleria-huacal { left: auto; right: 6%; }
+.verduleria-huacal-dibujo { position: absolute; left: 50%; bottom: 70%; width: 62%; transform: translateX(-50%) rotate(-8deg); z-index: -1; }
+
+/* --- Doña Tepo, asomada detrás de la mesa. Es un botón: repite la indicación. --- */
+.verduleria-tepo {
+  position: absolute; left: 50%; z-index: 1;
+  bottom: calc(var(--verduleria-alto-de-la-mesa) - var(--verduleria-alto-de-tepo) * 0.36);
+  height: var(--verduleria-alto-de-tepo); aspect-ratio: 160 / 228; margin-left: calc(var(--verduleria-alto-de-tepo) * -0.35);
+  border: 0; background: none; border-radius: 40% 40% 0 0;
+}
+.verduleria-tepo-dibujo { width: 100%; height: 100%; transform-origin: 50% 60%; }
+
+/* --- La mesa: una orilla de madera y un mantel de cuadritos --- */
+.verduleria-mesa {
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--verduleria-alto-de-la-mesa); z-index: 2;
+  border-top: 6px solid var(--mj-tinta);
+  background:
+    linear-gradient(#e3a868 0 18px, var(--mj-tinta) 18px 24px, transparent 24px),
+    linear-gradient(90deg, rgb(232 51 139 / 0.28) 50%, transparent 50%) 0 0 / 56px 56px,
+    linear-gradient(rgb(232 51 139 / 0.28) 50%, transparent 50%) 0 24px / 56px 56px,
+    #fff0e4;
+}
+.verduleria-sobre-la-mesa {
+  position: absolute; inset: 24px 0 0; display: grid; align-items: center; justify-items: center;
+  gap: clamp(10px, 2.5vw, 32px); padding: clamp(8px, 2.4vh, 22px) clamp(12px, 3vw, 40px) clamp(10px, 3vh, 26px);
+}
+
+/* Lo de la mesa llega y se va con suavidad entre una fase y otra. */
+.verduleria-llega { animation: verduleria-llegar 0.45s cubic-bezier(0.2, 1.2, 0.4, 1) backwards; }
+.verduleria-se-va { animation: verduleria-irse 0.32s ease-in forwards; pointer-events: none; }
+@keyframes verduleria-llegar { from { opacity: 0; transform: translateY(26px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes verduleria-irse { to { opacity: 0; transform: translateY(-18px) scale(0.97); } }
+
+/* Lo que vuela de un lado a otro (volar.ts le pone posición, tamaño y destino). */
+.verduleria-volador {
+  position: absolute; z-index: 6; object-fit: contain;
+  transition: transform 0.5s cubic-bezier(0.4, -0.3, 0.6, 1); filter: drop-shadow(0 6px 0 rgb(87 45 9 / 0.35));
+}
+
+/* --- Papelitos: la hojita de la lista y el ticket de la cuenta --- */
+.verduleria-papel {
+  position: relative; border: 5px solid var(--mj-tinta); border-radius: 10px 10px 14px 10px; box-shadow: 0 6px 0 var(--mj-tinta);
+  background: #fffdf2;
+}
+/* Un pedacito de cinta adhesiva que lo pega a la mesa. */
+.verduleria-papel::before {
+  content: ''; position: absolute; top: -14px; left: 50%; width: 64px; height: 22px; transform: translateX(-50%) rotate(-4deg);
+  background: rgb(254 212 73 / 0.85); border: 3px solid var(--mj-tinta); border-radius: 4px;
+}
+
+/* ===== Fase 1: la lista ===== */
+.verduleria-fase-lista { grid-template-columns: auto 1fr auto; }
+.verduleria-hojita {
+  --verduleria-renglon: clamp(40px, 8.6vh, 62px);
+  display: grid; grid-auto-rows: var(--verduleria-renglon); padding: 16px 16px 10px 12px; transform: rotate(-3deg);
+  /* Renglones de cuaderno: una raya azul debajo de cada uno, y la raya roja del margen. */
+  background:
+    linear-gradient(90deg, transparent 8px, rgb(226 69 47 / 0.55) 8px 11px, transparent 11px),
+    repeating-linear-gradient(transparent 0 calc(var(--verduleria-renglon) - 3px), rgb(23 181 176 / 0.45) calc(var(--verduleria-renglon) - 3px) var(--verduleria-renglon)) 0 16px,
+    #fffdf2;
+}
+.verduleria-renglon { display: flex; align-items: center; gap: 8px; padding: 0 4px 3px 8px; }
+.verduleria-casilla {
+  position: relative; width: calc(var(--verduleria-renglon) * 0.58); height: calc(var(--verduleria-renglon) * 0.58); flex: none;
+  border: 4px solid var(--mj-tinta); border-radius: 8px; background: #fff;
+}
+.verduleria-palomita {
+  position: absolute; left: -22%; bottom: -8%; width: 150%; max-width: none;
+  animation: mj-saltar-adentro 0.4s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.verduleria-renglon-dibujo { height: 88%; aspect-ratio: 1; object-fit: contain; transition: opacity 0.3s; }
+.verduleria-renglon-listo .verduleria-renglon-dibujo { opacity: 0.55; }
+
+.verduleria-cajas {
+  --verduleria-caja: clamp(68px, 15.5vh, 118px);
+  display: grid; grid-template-columns: repeat(3, var(--verduleria-caja)); grid-auto-rows: var(--verduleria-caja);
+  gap: clamp(8px, 1.8vh, 14px);
+}
+/* Cada verdura está en su cajita de madera. */
+.verduleria-caja, .verduleria-lechuga {
+  display: grid; place-items: center; border: 5px solid var(--mj-tinta); border-radius: 20px; box-shadow: 0 6px 0 var(--mj-tinta);
+  background: linear-gradient(#e9b77c 0 50%, #d99a5b 50%);
+  transition: transform 0.12s, background 0.3s, box-shadow 0.2s;
+}
+.verduleria-caja:hover:enabled, .verduleria-lechuga:hover:enabled, .verduleria-pieza:hover { transform: translateY(-4px); }
+.verduleria-caja:active:enabled, .verduleria-lechuga:active:enabled { transform: translateY(4px); box-shadow: 0 2px 0 var(--mj-tinta); }
+.verduleria-caja-dibujo { width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 3px 0 rgb(87 45 9 / 0.3)); }
+.verduleria-caja-vacia { background: #b9783f; box-shadow: inset 0 6px 0 rgb(0 0 0 / 0.18), 0 6px 0 var(--mj-tinta); cursor: default; }
+.verduleria-bolsa { width: clamp(84px, 24vh, 190px); height: auto; filter: drop-shadow(0 8px 0 rgb(87 45 9 / 0.25)); }
+
+/* ===== Fase 2: la lechuga ===== */
+.verduleria-fase-lechuga { grid-auto-flow: column; justify-content: center; }
+.verduleria-lechuga { width: clamp(104px, 34vh, 240px); max-width: 27vw; aspect-ratio: 1; border-radius: 28px; }
+.verduleria-lechuga-dibujo { width: 88%; height: 88%; object-fit: contain; filter: drop-shadow(0 4px 0 rgb(87 45 9 / 0.3)); }
+.verduleria-lechuga-ya-elegida .verduleria-lechuga { pointer-events: none; opacity: 0.5; }
+.verduleria-lechuga-ya-elegida .verduleria-lechuga-buena {
+  opacity: 1; background: linear-gradient(#fff3a6 0 50%, #fed449 50%); box-shadow: 0 6px 0 var(--mj-tinta), 0 0 0 10px rgb(255 255 255 / 0.75);
+}
+
+/* ===== Fase 3: pagar y revisar el cambio ===== */
+.verduleria-fase-cambio { grid-template-columns: auto minmax(0, 1fr) auto; }
+.verduleria-ticket { display: grid; gap: 4px; padding: 18px 14px 12px; transform: rotate(-2deg); }
+.verduleria-ticket-renglon { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 8px; transition: opacity 0.4s; }
+.verduleria-ticket-dibujo { width: clamp(34px, 8vh, 58px); height: clamp(30px, 7vh, 52px); object-fit: contain; }
+.verduleria-ticket-numero { font-size: clamp(22px, 5.6vh, 40px); line-height: 1.15; }
+/* Antes de pagar solo se ve el precio; el billete y el cambio aparecen al pagar. */
+.verduleria-ticket-pago, .verduleria-ticket-cambio, .verduleria-ticket-signo { opacity: 0; transition: opacity 0.4s; }
+.verduleria-ticket-cambio { margin-top: 4px; padding-top: 6px; border-top: 5px solid var(--mj-tinta); border-radius: 0 0 8px 8px; }
+.verduleria-ticket-pagado .verduleria-ticket-pago, .verduleria-ticket-pagado .verduleria-ticket-cambio,
+.verduleria-ticket-pagado .verduleria-ticket-signo { opacity: 1; }
+.verduleria-ticket-pagado .verduleria-ticket-cambio { background: var(--mj-acento); }
+
+.verduleria-charola {
+  display: flex; align-items: center; gap: clamp(8px, 2vw, 18px); width: min(100%, 520px); min-height: clamp(104px, 26vh, 170px);
+  padding: 12px clamp(10px, 2vw, 22px); background: #d99a5b; border: 6px solid var(--mj-tinta); border-radius: 28px;
+  box-shadow: inset 0 8px 0 rgb(0 0 0 / 0.14), 0 6px 0 var(--mj-tinta); transition: background 0.4s;
+}
+.verduleria-charola-completa { background: #8fd97c; }
+.verduleria-charola-piezas { flex: 1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: clamp(14px, 2vw, 24px); }
+.verduleria-charola-cuenta {
+  min-width: clamp(76px, 12vw, 120px); padding: 2px 12px; text-align: center; font-size: clamp(26px, 6.4vh, 46px); line-height: 1.25;
+  background: var(--mj-papel); border: 5px solid var(--mj-tinta); border-radius: 20px; box-shadow: 0 5px 0 var(--mj-tinta);
+}
+.verduleria-pieza {
+  width: clamp(68px, 14vh, 100px); aspect-ratio: 1; border: 0; border-radius: 50%; background: none; transition: transform 0.15s, box-shadow 0.15s;
+}
+.verduleria-pieza-billete { width: clamp(110px, 22vh, 160px); aspect-ratio: 2; border-radius: 12px; }
+.verduleria-pieza-dibujo { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 0 rgb(87 45 9 / 0.5)); }
+/* Una pieza ya contada se levanta y se rodea de blanco. */
+.verduleria-pieza-contada { transform: translateY(-6px); box-shadow: 0 0 0 6px #fff6e0, 0 0 0 10px var(--mj-tinta); }
+
+.verduleria-acciones { display: flex; flex-direction: column; align-items: center; gap: clamp(10px, 2.4vh, 20px); min-width: clamp(96px, 16vw, 200px); }
+.verduleria-billete {
+  width: clamp(120px, 17vw, 210px); border: 0; background: none; border-radius: 12px;
+  animation: verduleria-llamar 1.4s ease-in-out infinite;
+}
+.verduleria-billete:disabled { animation: none; }
+.verduleria-billete-dibujo { width: 100%; height: auto; filter: drop-shadow(0 6px 0 rgb(87 45 9 / 0.5)); }
+@keyframes verduleria-llamar { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(3deg) scale(1.08); } }
+.verduleria-boton-completo { background: #8fd97c; }
+.verduleria-boton-falta { background: var(--mj-acento); }
+
+/* Pantallas bajitas (un teléfono acostado): las verduras en dos filas largas y la hojita en dos columnas. */
+@media (max-height: 520px) {
+  .verduleria-cajas { grid-template-columns: repeat(5, var(--verduleria-caja)); }
+  .verduleria-hojita { grid-auto-flow: column; grid-template-rows: repeat(3, var(--verduleria-renglon)); padding-top: 12px; }
+  .verduleria-papel::before { width: 44px; height: 16px; top: -11px; }
+  .verduleria-acciones { flex-direction: row; }
+  .verduleria-acciones .mj-boton-grande { width: 84px; height: 84px; }
+  .verduleria-ticket { padding: 12px 8px 8px; gap: 0; }
+}

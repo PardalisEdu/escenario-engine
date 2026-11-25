@@ -1,0 +1,1637 @@
+{
+ "compressionlevel": -1,
+ "height": 14,
+ "infinite": false,
+ "layers": [
+  {
+   "id": 1,
+   "name": "suelo",
+   "type": "imagelayer",
+   "image": "img/lugar/suelo_mercado.svg",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "offsetx": 0,
+   "offsety": 0,
+   "properties": [
+    {
+     "name": "asset",
+     "type": "string",
+     "value": "suelo_mercado"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "name": "telones",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "name": "Fachadas 1",
+     "type": "telon",
+     "x": 0,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 1480,
+       "y": 0
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_fachadas_a"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 620
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "Fachadas 2",
+     "type": "telon",
+     "x": 1480,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 1480,
+       "y": 0
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_fachadas_b"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 620
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "Fachadas 3",
+     "type": "telon",
+     "x": 2960,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 1440,
+       "y": 0
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_fachadas_c"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 620
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "Calle de la izquierda",
+     "type": "telon",
+     "x": 0,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 0,
+       "y": 1360
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_lateral_a"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 620
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "Calle de la derecha",
+     "type": "telon",
+     "x": 4400,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 0,
+       "y": 1360
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_lateral_b"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 620
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "decorado",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 6,
+     "name": "Verdulería: fondo",
+     "type": "parado",
+     "x": 450,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_verduras"
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "Verdulería: mostrador",
+     "type": "parado",
+     "x": 460,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_verduras"
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "Aguas frescas: fondo",
+     "type": "parado",
+     "x": 850,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_aguas"
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "Aguas frescas: mostrador",
+     "type": "parado",
+     "x": 860,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_aguas"
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "Tostadas: fondo",
+     "type": "parado",
+     "x": 1250,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_tostadas"
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "Tostadas: mostrador",
+     "type": "parado",
+     "x": 1260,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_tostadas"
+      }
+     ]
+    },
+    {
+     "id": 21,
+     "name": "Rascaditas: fondo",
+     "type": "parado",
+     "x": 1680,
+     "y": 150,
+     "width": 280,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_rascaditas"
+      }
+     ]
+    },
+    {
+     "id": 22,
+     "name": "Rascaditas: mostrador",
+     "type": "parado",
+     "x": 1700,
+     "y": 300,
+     "width": 240,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_rascaditas"
+      }
+     ]
+    },
+    {
+     "id": 26,
+     "name": "Maíz: fondo",
+     "type": "parado",
+     "x": 2010,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_maiz"
+      }
+     ]
+    },
+    {
+     "id": 27,
+     "name": "Maíz: mostrador",
+     "type": "parado",
+     "x": 2020,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_maiz"
+      }
+     ]
+    },
+    {
+     "id": 31,
+     "name": "Vidente: fondo",
+     "type": "parado",
+     "x": 2820,
+     "y": 150,
+     "width": 320,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_vidente"
+      }
+     ]
+    },
+    {
+     "id": 32,
+     "name": "Vidente: mostrador",
+     "type": "parado",
+     "x": 2880,
+     "y": 300,
+     "width": 200,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_vidente"
+      }
+     ]
+    },
+    {
+     "id": 36,
+     "name": "Chiles: fondo",
+     "type": "parado",
+     "x": 3170,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_chiles"
+      }
+     ]
+    },
+    {
+     "id": 37,
+     "name": "Chiles: mostrador",
+     "type": "parado",
+     "x": 3180,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_chiles"
+      }
+     ]
+    },
+    {
+     "id": 41,
+     "name": "Flores: fondo",
+     "type": "parado",
+     "x": 3570,
+     "y": 150,
+     "width": 380,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "puesto_flores"
+      }
+     ]
+    },
+    {
+     "id": 42,
+     "name": "Flores: mostrador",
+     "type": "parado",
+     "x": 3580,
+     "y": 300,
+     "width": 360,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mostrador_flores"
+      }
+     ]
+    },
+    {
+     "id": 46,
+     "name": "Jacaranda",
+     "type": "parado",
+     "x": 2660,
+     "y": 160,
+     "width": 60,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "jacaranda"
+      }
+     ]
+    },
+    {
+     "id": 47,
+     "name": "Piñatas",
+     "type": "colgado",
+     "x": 2330,
+     "y": 250,
+     "width": 520,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "pinatas"
+      },
+      {
+       "name": "id",
+       "type": "string",
+       "value": "pinatas"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 150
+      }
+     ]
+    },
+    {
+     "id": 53,
+     "name": "Letrero de casa",
+     "type": "parado",
+     "x": 170,
+     "y": 300,
+     "width": 30,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "letrero_casa"
+      }
+     ]
+    },
+    {
+     "id": 54,
+     "name": "Flecha a casa",
+     "type": "plano",
+     "x": 150,
+     "y": 560,
+     "width": 200,
+     "height": 120,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "flecha_piso"
+      }
+     ]
+    },
+    {
+     "id": 55,
+     "name": "Avioncito",
+     "type": "plano",
+     "x": 1160,
+     "y": 440,
+     "width": 200,
+     "height": 420,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "avioncito"
+      }
+     ]
+    },
+    {
+     "id": 56,
+     "name": "Jacaranda de la entrada",
+     "type": "parado",
+     "x": 330,
+     "y": 160,
+     "width": 60,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "jacaranda"
+      }
+     ]
+    },
+    {
+     "id": 57,
+     "name": "Jacaranda del fondo",
+     "type": "parado",
+     "x": 4090,
+     "y": 160,
+     "width": 60,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "jacaranda"
+      }
+     ]
+    },
+    {
+     "id": 58,
+     "name": "Papel picado 1",
+     "type": "colgado",
+     "x": 260,
+     "y": 330,
+     "width": 760,
+     "height": 20,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "papel_picado_a"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 330
+      }
+     ]
+    },
+    {
+     "id": 59,
+     "name": "Papel picado 2",
+     "type": "colgado",
+     "x": 1100,
+     "y": 330,
+     "width": 760,
+     "height": 20,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "papel_picado_b"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 330
+      }
+     ]
+    },
+    {
+     "id": 60,
+     "name": "Papel picado 3",
+     "type": "colgado",
+     "x": 1940,
+     "y": 330,
+     "width": 760,
+     "height": 20,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "papel_picado_a"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 330
+      }
+     ]
+    },
+    {
+     "id": 61,
+     "name": "Papel picado 4",
+     "type": "colgado",
+     "x": 2780,
+     "y": 330,
+     "width": 760,
+     "height": 20,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "papel_picado_b"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 330
+      }
+     ]
+    },
+    {
+     "id": 62,
+     "name": "Papel picado 5",
+     "type": "colgado",
+     "x": 3620,
+     "y": 330,
+     "width": 760,
+     "height": 20,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "papel_picado_a"
+      },
+      {
+       "name": "altura",
+       "type": "int",
+       "value": 330
+      }
+     ]
+    },
+    {
+     "id": 63,
+     "name": "Farol 1",
+     "type": "parado",
+     "x": 820,
+     "y": 170,
+     "width": 40,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "farol"
+      }
+     ]
+    },
+    {
+     "id": 64,
+     "name": "Farol 2",
+     "type": "parado",
+     "x": 1610,
+     "y": 170,
+     "width": 40,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "farol"
+      }
+     ]
+    },
+    {
+     "id": 65,
+     "name": "Farol 3",
+     "type": "parado",
+     "x": 1990,
+     "y": 170,
+     "width": 40,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "farol"
+      }
+     ]
+    },
+    {
+     "id": 66,
+     "name": "Farol 4",
+     "type": "parado",
+     "x": 3140,
+     "y": 170,
+     "width": 40,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "farol"
+      }
+     ]
+    },
+    {
+     "id": 67,
+     "name": "Farol 5",
+     "type": "parado",
+     "x": 3540,
+     "y": 170,
+     "width": 40,
+     "height": 30,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "farol"
+      }
+     ]
+    },
+    {
+     "id": 68,
+     "name": "Maceta 1",
+     "type": "parado",
+     "x": 760,
+     "y": 1030,
+     "width": 110,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "maceta_nopal"
+      }
+     ]
+    },
+    {
+     "id": 69,
+     "name": "Cajas 1",
+     "type": "parado",
+     "x": 1560,
+     "y": 1030,
+     "width": 200,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "cajas_fruta"
+      }
+     ]
+    },
+    {
+     "id": 70,
+     "name": "Maceta 2",
+     "type": "parado",
+     "x": 2420,
+     "y": 1030,
+     "width": 110,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "maceta_flores"
+      }
+     ]
+    },
+    {
+     "id": 71,
+     "name": "Cajas 2",
+     "type": "parado",
+     "x": 3180,
+     "y": 1030,
+     "width": 200,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "cajas_fruta"
+      }
+     ]
+    },
+    {
+     "id": 72,
+     "name": "Maceta 3",
+     "type": "parado",
+     "x": 4040,
+     "y": 1030,
+     "width": 110,
+     "height": 40,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "maceta_nopal"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "npcs",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 8,
+     "name": "Doña Tepo",
+     "type": "npc",
+     "x": 640,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "tepo"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "Axo",
+     "type": "npc",
+     "x": 1040,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "axo"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "Don Armando",
+     "type": "npc",
+     "x": 1440,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "armando"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 23,
+     "name": "Don Tlacua",
+     "type": "npc",
+     "x": 1820,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "tlacua"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 28,
+     "name": "Don Guajo",
+     "type": "npc",
+     "x": 2200,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "guajo"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 33,
+     "name": "Madame Lula",
+     "type": "npc",
+     "x": 2980,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "lula"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 38,
+     "name": "Doña Igu",
+     "type": "npc",
+     "x": 3360,
+     "y": 245,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "igu"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 45,
+     "name": "Coli",
+     "type": "npc",
+     "x": 3850,
+     "y": 330,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "coli"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "izquierda"
+      }
+     ]
+    },
+    {
+     "id": 48,
+     "name": "Don Xolo",
+     "type": "npc",
+     "x": 2470,
+     "y": 300,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "xolo"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 73,
+     "name": "Bobby",
+     "type": "npc",
+     "x": 300,
+     "y": 640,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "id",
+       "type": "string",
+       "value": "bobby"
+      },
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "name": "interaccion",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 9,
+     "name": "frente_verduras",
+     "type": "punto",
+     "x": 570,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 10,
+     "name": "primo_verduras",
+     "type": "punto",
+     "x": 720,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "frente_aguas",
+     "type": "punto",
+     "x": 970,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "primo_aguas",
+     "type": "punto",
+     "x": 1120,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 19,
+     "name": "frente_tostadas",
+     "type": "punto",
+     "x": 1370,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 20,
+     "name": "primo_tostadas",
+     "type": "punto",
+     "x": 1520,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 24,
+     "name": "frente_rascaditas",
+     "type": "punto",
+     "x": 1750,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 25,
+     "name": "primo_rascaditas",
+     "type": "punto",
+     "x": 1900,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 29,
+     "name": "frente_maiz",
+     "type": "punto",
+     "x": 2130,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 30,
+     "name": "primo_maiz",
+     "type": "punto",
+     "x": 2280,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 34,
+     "name": "frente_vidente",
+     "type": "punto",
+     "x": 2910,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 35,
+     "name": "primo_vidente",
+     "type": "punto",
+     "x": 3060,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 39,
+     "name": "frente_chiles",
+     "type": "punto",
+     "x": 3290,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 40,
+     "name": "primo_chiles",
+     "type": "punto",
+     "x": 3440,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 43,
+     "name": "frente_flores",
+     "type": "punto",
+     "x": 3690,
+     "y": 390,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 44,
+     "name": "primo_flores",
+     "type": "punto",
+     "x": 3840,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 49,
+     "name": "frente_pinatas",
+     "type": "punto",
+     "x": 2560,
+     "y": 400,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 50,
+     "name": "primo_pinatas",
+     "type": "punto",
+     "x": 2690,
+     "y": 420,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 51,
+     "name": "frente_xolo",
+     "type": "punto",
+     "x": 2400,
+     "y": 400,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 52,
+     "name": "primo_xolo",
+     "type": "punto",
+     "x": 2560,
+     "y": 420,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 74,
+     "name": "Inicio del jugador",
+     "type": "inicioJugador",
+     "x": 420,
+     "y": 600,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "mira",
+       "type": "string",
+       "value": "derecha"
+      }
+     ]
+    },
+    {
+     "id": 75,
+     "name": "entrada",
+     "type": "punto",
+     "x": 420,
+     "y": 600,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 76,
+     "name": "primo_entrada",
+     "type": "punto",
+     "x": 300,
+     "y": 640,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 77,
+     "name": "vista_mercado",
+     "type": "punto",
+     "x": 1500,
+     "y": 560,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 78,
+     "name": "junto_a_la_salida",
+     "type": "punto",
+     "x": 250,
+     "y": 620,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 79,
+     "name": "Salida",
+     "type": "salida",
+     "x": 120,
+     "y": 380,
+     "width": 110,
+     "height": 500,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 80,
+     "name": "entrada_del_mercado",
+     "type": "zona",
+     "x": 240,
+     "y": 360,
+     "width": 700,
+     "height": 520,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "grupo",
+       "type": "string",
+       "value": "paseo"
+      },
+      {
+       "name": "espera",
+       "type": "int",
+       "value": 40
+      }
+     ]
+    },
+    {
+     "id": 81,
+     "name": "medio_del_mercado",
+     "type": "zona",
+     "x": 1500,
+     "y": 360,
+     "width": 900,
+     "height": 520,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "grupo",
+       "type": "string",
+       "value": "antojo"
+      },
+      {
+       "name": "espera",
+       "type": "int",
+       "value": 40
+      }
+     ]
+    },
+    {
+     "id": 82,
+     "name": "fondo_del_mercado",
+     "type": "zona",
+     "x": 3000,
+     "y": 360,
+     "width": 1200,
+     "height": 520,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "grupo",
+       "type": "string",
+       "value": "paseo"
+      },
+      {
+       "name": "espera",
+       "type": "int",
+       "value": 40
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "piso",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 83,
+     "name": "Pasillo del mercado",
+     "type": "",
+     "x": 120,
+     "y": 352,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polygon": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 4160,
+       "y": 0
+      },
+      {
+       "x": 4160,
+       "y": 538
+      },
+      {
+       "x": 0,
+       "y": 538
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "nextlayerid": 7,
+ "nextobjectid": 84,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tiledversion": "1.11.0",
+ "tileheight": 100,
+ "tilesets": [],
+ "tilewidth": 100,
+ "type": "map",
+ "version": "1.10",
+ "width": 44
+}

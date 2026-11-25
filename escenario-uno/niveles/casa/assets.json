@@ -1,0 +1,58 @@
+{
+  "cojin": {
+    "tipo": "imagen",
+    "archivo": "img/cojin.svg",
+    "ancho": 150,
+    "alto": 110
+  },
+  "mesita": {
+    "tipo": "imagen",
+    "archivo": "img/mesita.svg",
+    "ancho": 200,
+    "alto": 130
+  },
+  "pardi_tele": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/pardi_tele_1.svg",
+      "img/pardi_tele_2.svg"
+    ],
+    "fps": 2,
+    "ancho": 180,
+    "alto": 180
+  },
+  "planta": {
+    "tipo": "imagen",
+    "archivo": "img/planta.svg",
+    "ancho": 180,
+    "alto": 300
+  },
+  "sillon": {
+    "tipo": "imagen",
+    "archivo": "img/sillon.svg",
+    "ancho": 300,
+    "alto": 210
+  },
+  "tele": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/tele_1.svg",
+      "img/tele_2.svg"
+    ],
+    "fps": 2,
+    "ancho": 260,
+    "alto": 290
+  },
+  "telon_pared_sala": {
+    "tipo": "imagen",
+    "archivo": "img/telon_pared_sala.svg",
+    "ancho": 760,
+    "alto": 440
+  },
+  "telon_sala": {
+    "tipo": "imagen",
+    "archivo": "img/telon_sala.svg",
+    "ancho": 1200,
+    "alto": 440
+  }
+}

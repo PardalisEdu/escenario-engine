@@ -1,0 +1,380 @@
+{
+ "compressionlevel": -1,
+ "height": 9,
+ "infinite": false,
+ "layers": [
+  {
+   "id": 1,
+   "name": "suelo",
+   "type": "imagelayer",
+   "image": "../comun/img/casa/suelo_casa.svg",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "offsetx": -70,
+   "offsety": 100,
+   "properties": [
+    {
+     "name": "asset",
+     "type": "string",
+     "value": "suelo_casa"
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "name": "telones",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 1,
+     "name": "Pared del fondo",
+     "type": "telon",
+     "x": 0,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 1500,
+       "y": 0
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_comedor"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 440
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "Pared izquierda",
+     "type": "telon",
+     "x": 0,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 0,
+       "y": 760
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_pared_comedor"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 440
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "Pared derecha",
+     "type": "telon",
+     "x": 1500,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polyline": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 0,
+       "y": 760
+      }
+     ],
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "telon_pared_comedor"
+      },
+      {
+       "name": "alto",
+       "type": "int",
+       "value": 440
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "name": "decorado",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 4,
+     "name": "La mesa con la familia",
+     "type": "parado",
+     "x": 250,
+     "y": 330,
+     "width": 1000,
+     "height": 60,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "mesa_familia"
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "Tapete",
+     "type": "plano",
+     "x": 540,
+     "y": 500,
+     "width": 420,
+     "height": 240,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "asset",
+       "type": "string",
+       "value": "tapete"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "name": "npcs",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": []
+  },
+  {
+   "id": 5,
+   "name": "interaccion",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 6,
+     "name": "entra",
+     "type": "punto",
+     "x": 1440,
+     "y": 640,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 7,
+     "name": "entra_2",
+     "type": "punto",
+     "x": 1440,
+     "y": 740,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 8,
+     "name": "centro_comedor",
+     "type": "punto",
+     "x": 750,
+     "y": 400,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 9,
+     "name": "frente_mesa",
+     "type": "punto",
+     "x": 750,
+     "y": 620,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 10,
+     "name": "mama_llega",
+     "type": "punto",
+     "x": 1100,
+     "y": 600,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 11,
+     "name": "lugar_mama",
+     "type": "punto",
+     "x": 1420,
+     "y": 450,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 12,
+     "name": "pardi_llega",
+     "type": "punto",
+     "x": 640,
+     "y": 640,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 13,
+     "name": "bobby_llega",
+     "type": "punto",
+     "x": 840,
+     "y": 660,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "lugar_pardi",
+     "type": "punto",
+     "x": 140,
+     "y": 430,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "lugar_bobby",
+     "type": "punto",
+     "x": 1290,
+     "y": 410,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "name": "piso",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "opacity": 1,
+   "visible": true,
+   "x": 0,
+   "y": 0,
+   "objects": [
+    {
+     "id": 16,
+     "name": "Comedor",
+     "type": "",
+     "x": 40,
+     "y": 400,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "polygon": [
+      {
+       "x": 0,
+       "y": 0
+      },
+      {
+       "x": 1420,
+       "y": 0
+      },
+      {
+       "x": 1420,
+       "y": 450
+      },
+      {
+       "x": 0,
+       "y": 450
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "nextlayerid": 7,
+ "nextobjectid": 17,
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "tiledversion": "1.11.0",
+ "tileheight": 100,
+ "tilesets": [],
+ "tilewidth": 100,
+ "type": "map",
+ "version": "1.10",
+ "width": 15
+}

@@ -1,0 +1,310 @@
+{
+  "avioncito": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/avioncito.svg",
+    "ancho": 200,
+    "alto": 420
+  },
+  "cajas_fruta": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/cajas_fruta.svg",
+    "ancho": 220,
+    "alto": 170
+  },
+  "carta_arcoiris": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/carta_arcoiris.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "carta_corazon": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/carta_corazon.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "carta_reverso": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/carta_reverso.svg",
+    "ancho": 100,
+    "alto": 140
+  },
+  "carta_sol": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/carta_sol.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "carta_trebol": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/carta_trebol.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "chiles_canasta": {
+    "tipo": "imagen",
+    "archivo": "img/minijuegos/chiles_canasta.svg",
+    "ancho": 160,
+    "alto": 100
+  },
+  "farol": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/farol.svg",
+    "ancho": 120,
+    "alto": 430
+  },
+  "flecha_piso": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/flecha_piso.svg",
+    "ancho": 200,
+    "alto": 120
+  },
+  "guajo_habla": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/guajo_habla.svg",
+    "ancho": 230,
+    "alto": 250
+  },
+  "jacaranda": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/jacaranda.svg",
+    "ancho": 340,
+    "alto": 460
+  },
+  "letrero_casa": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/letrero_casa.svg",
+    "ancho": 150,
+    "alto": 260
+  },
+  "lula_ve": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/lula_ve.svg",
+    "ancho": 190,
+    "alto": 236
+  },
+  "maceta_flores": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/maceta_flores.svg",
+    "ancho": 130,
+    "alto": 170
+  },
+  "maceta_nopal": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/maceta_nopal.svg",
+    "ancho": 130,
+    "alto": 170
+  },
+  "mostrador_aguas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_aguas.svg",
+    "ancho": 360,
+    "alto": 190
+  },
+  "mostrador_chiles": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_chiles.svg",
+    "ancho": 360,
+    "alto": 150
+  },
+  "mostrador_flores": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_flores.svg",
+    "ancho": 360,
+    "alto": 150
+  },
+  "mostrador_maiz": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_maiz.svg",
+    "ancho": 360,
+    "alto": 150
+  },
+  "mostrador_rascaditas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_rascaditas.svg",
+    "ancho": 240,
+    "alto": 140
+  },
+  "mostrador_tostadas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_tostadas.svg",
+    "ancho": 360,
+    "alto": 150
+  },
+  "mostrador_verduras": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_verduras.svg",
+    "ancho": 360,
+    "alto": 150
+  },
+  "mostrador_vidente": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/mostrador_vidente.svg",
+    "ancho": 200,
+    "alto": 170
+  },
+  "mus_mercado": {
+    "tipo": "audio",
+    "archivo": "sonido/mus_mercado.wav"
+  },
+  "papel_picado_a": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/papel_picado_a.svg",
+    "ancho": 760,
+    "alto": 120
+  },
+  "papel_picado_b": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/papel_picado_b.svg",
+    "ancho": 760,
+    "alto": 120
+  },
+  "pinatas": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/pinatas.svg",
+    "ancho": 520,
+    "alto": 250
+  },
+  "puesto_aguas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_aguas.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_chiles": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_chiles.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_flores": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_flores.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_maiz": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_maiz.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_rascaditas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_rascaditas.svg",
+    "ancho": 300,
+    "alto": 330
+  },
+  "puesto_tostadas": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_tostadas.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_verduras": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_verduras.svg",
+    "ancho": 400,
+    "alto": 340
+  },
+  "puesto_vidente": {
+    "tipo": "imagen",
+    "archivo": "img/puestos/puesto_vidente.svg",
+    "ancho": 340,
+    "alto": 360
+  },
+  "spr_armando": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_armando.svg",
+    "ancho": 206,
+    "alto": 256
+  },
+  "spr_axo": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_axo.svg",
+    "ancho": 212,
+    "alto": 214
+  },
+  "spr_coli": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/personajes/spr_coli_1.svg",
+      "img/personajes/spr_coli_2.svg"
+    ],
+    "fps": 10,
+    "ancho": 150,
+    "alto": 200
+  },
+  "spr_guajo": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_guajo.svg",
+    "ancho": 230,
+    "alto": 250
+  },
+  "spr_igu": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_igu.svg",
+    "ancho": 204,
+    "alto": 250
+  },
+  "spr_lula": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_lula.svg",
+    "ancho": 190,
+    "alto": 236
+  },
+  "spr_tepo": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_tepo.svg",
+    "ancho": 160,
+    "alto": 228
+  },
+  "spr_tlacua": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_tlacua.svg",
+    "ancho": 196,
+    "alto": 250
+  },
+  "spr_xolo": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_xolo.svg",
+    "ancho": 210,
+    "alto": 276
+  },
+  "suelo_mercado": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/suelo_mercado.svg",
+    "ancho": 4400,
+    "alto": 1400
+  },
+  "telon_fachadas_a": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/telon_fachadas_a.svg",
+    "ancho": 1480,
+    "alto": 620
+  },
+  "telon_fachadas_b": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/telon_fachadas_b.svg",
+    "ancho": 1480,
+    "alto": 620
+  },
+  "telon_fachadas_c": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/telon_fachadas_c.svg",
+    "ancho": 1440,
+    "alto": 620
+  },
+  "telon_lateral_a": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/telon_lateral_a.svg",
+    "ancho": 960,
+    "alto": 620
+  },
+  "telon_lateral_b": {
+    "tipo": "imagen",
+    "archivo": "img/lugar/telon_lateral_b.svg",
+    "ancho": 960,
+    "alto": 620
+  }
+}

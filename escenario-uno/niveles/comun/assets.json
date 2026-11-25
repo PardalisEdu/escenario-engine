@@ -1,0 +1,424 @@
+{
+  "bobby_duda": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/bobby_duda.svg",
+    "ancho": 174,
+    "alto": 208
+  },
+  "bobby_feliz": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/bobby_feliz.svg",
+    "ancho": 174,
+    "alto": 208
+  },
+  "bobby_saluda": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/personajes/bobby_saluda_1.svg",
+      "img/personajes/bobby_saluda_2.svg"
+    ],
+    "fps": 5,
+    "ancho": 174,
+    "alto": 208
+  },
+  "item_agua_horchata": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_agua_horchata.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_agua_jamaica": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_agua_jamaica.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_agua_limon": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_agua_limon.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_aguacate": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_aguacate.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_balero": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_balero.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_billete100": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_billete100.svg",
+    "ancho": 160,
+    "alto": 80
+  },
+  "item_billete20": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_billete20.svg",
+    "ancho": 160,
+    "alto": 80
+  },
+  "item_billete50": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_billete50.svg",
+    "ancho": 160,
+    "alto": 80
+  },
+  "item_boleto": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_boleto.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_bolsa": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_bolsa.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_cebolla": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_cebolla.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_chile_ancho": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_chile_ancho.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_chile_guajillo": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_chile_guajillo.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_chile_verde": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_chile_verde.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_chiles": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_chiles.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_estrella": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_estrella.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_estrella_vacia": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_estrella_vacia.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_flor": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_flor.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_fruta": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_fruta.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_helado": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_helado.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_jitomate": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_jitomate.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_lechuga": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_lechuga.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_lechuga_chica": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_lechuga_chica.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_lechuga_marchita": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_lechuga_marchita.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_limon": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_limon.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_maiz": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_maiz.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_mazorca": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_mazorca.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_moneda1": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_moneda1.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_moneda10": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_moneda10.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_moneda2": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_moneda2.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_moneda5": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_moneda5.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_oregano": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_oregano.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_palomita": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_palomita.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_pozole": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_pozole.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_rabanos": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_rabanos.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_tostada": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_tostada.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_tostada_rota1": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_tostada_rota1.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_tostada_rota2": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_tostada_rota2.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_tostadas": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_tostadas.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "item_zanahoria": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/item_zanahoria.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "mama_lista": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/mama_lista.svg",
+    "ancho": 182,
+    "alto": 250
+  },
+  "mama_olla": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/mama_olla.svg",
+    "ancho": 170,
+    "alto": 250
+  },
+  "mus_fiesta": {
+    "tipo": "audio",
+    "archivo": "sonido/mus_fiesta.wav"
+  },
+  "pardi_bolsa": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/pardi_bolsa.svg",
+    "ancho": 164,
+    "alto": 196
+  },
+  "pardi_duda": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/pardi_duda.svg",
+    "ancho": 150,
+    "alto": 196
+  },
+  "pardi_feliz": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/pardi_feliz.svg",
+    "ancho": 150,
+    "alto": 196
+  },
+  "pardi_sorpresa": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/pardi_sorpresa.svg",
+    "ancho": 150,
+    "alto": 196
+  },
+  "premio_canica": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/premio_canica.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "premio_dulce": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/premio_dulce.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "premio_globo": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/premio_globo.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "premio_pizarron": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/premio_pizarron.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "premio_trompo": {
+    "tipo": "imagen",
+    "archivo": "img/cosas/premio_trompo.svg",
+    "ancho": 100,
+    "alto": 100
+  },
+  "sfx_achu": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_achu.wav"
+  },
+  "sfx_bien": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_bien.wav"
+  },
+  "sfx_carta": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_carta.wav"
+  },
+  "sfx_crujido": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_crujido.wav"
+  },
+  "sfx_estrella": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_estrella.wav"
+  },
+  "sfx_moneda": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_moneda.wav"
+  },
+  "sfx_no": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_no.wav"
+  },
+  "sfx_pop": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_pop.wav"
+  },
+  "sfx_puerta": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_puerta.wav"
+  },
+  "sfx_rasca": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_rasca.wav"
+  },
+  "sfx_toc": {
+    "tipo": "audio",
+    "archivo": "sonido/sfx_toc.wav"
+  },
+  "spr_bobby": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/personajes/spr_bobby_1.svg",
+      "img/personajes/spr_bobby_2.svg",
+      "img/personajes/spr_bobby_3.svg",
+      "img/personajes/spr_bobby_4.svg",
+      "img/personajes/spr_bobby_5.svg",
+      "img/personajes/spr_bobby_6.svg"
+    ],
+    "fps": 3,
+    "ancho": 174,
+    "alto": 208
+  },
+  "spr_mama": {
+    "tipo": "imagen",
+    "archivo": "img/personajes/spr_mama.svg",
+    "ancho": 170,
+    "alto": 250
+  },
+  "spr_pardi": {
+    "tipo": "animacion",
+    "cuadros": [
+      "img/personajes/spr_pardi_1.svg",
+      "img/personajes/spr_pardi_2.svg",
+      "img/personajes/spr_pardi_3.svg",
+      "img/personajes/spr_pardi_4.svg",
+      "img/personajes/spr_pardi_5.svg",
+      "img/personajes/spr_pardi_6.svg"
+    ],
+    "fps": 3,
+    "ancho": 150,
+    "alto": 196
+  },
+  "suelo_casa": {
+    "tipo": "imagen",
+    "archivo": "img/casa/suelo_casa.svg",
+    "ancho": 1650,
+    "alto": 1320
+  },
+  "tapete": {
+    "tipo": "imagen",
+    "archivo": "img/casa/tapete.svg",
+    "ancho": 420,
+    "alto": 240
+  }
+}

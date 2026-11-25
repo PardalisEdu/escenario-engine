@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1650 1320">
+  <defs><pattern id="loseta" width="110" height="110" patternUnits="userSpaceOnUse">
+    <rect width="110" height="110" fill="#e9c9a0"/><rect x="3" y="3" width="104" height="104" rx="6" fill="#d98a52"/><rect x="3" y="3" width="104" height="104" rx="6" fill="#e39a62" opacity="0.5"/>
+    <rect x="-9" y="-9" width="18" height="18" fill="#2f6fd0" transform="rotate(45)"/><rect x="101" y="101" width="18" height="18" fill="#2f6fd0" transform="rotate(45 110 110)"/>
+  </pattern></defs><rect x="0" y="0" width="1650" height="1320" rx="0" fill="url(#loseta)"/>
+</svg>
